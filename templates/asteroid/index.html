@@ -179,6 +179,7 @@
             if (highest_score != 0) {
                 $("#id_new_high_score").removeAttr("hidden")
                 $("#id_high_score").html(highest_score)
+                $("#id_score").attr("value", highest_score)
             }
             context.restore()
             game_state = HOME
@@ -283,8 +284,17 @@
         <td><canvas id="viewport" style="border:1px solid #000000;" width="1000" height="800"></canvas></td>
         <td style="vertical-align: top; padding-left: 15px;">
             <div id="id_new_high_score" hidden>
-                <h1>Highest Score Today</h1>
-                <span  style="font-size: 25px;" id="id_high_score"></span>
+                <h1>Highest Score Today: <span id="id_high_score"></span></h1>
+                <div style="font-size: 25px;">
+                    <form action="{% url 'asteroid:save_high_score' %}" method="post">
+                        {% csrf_token %}
+                        <label for="id_name">Name:</label>
+                        <input type="hidden" name="score" required="" id="id_score">
+                        <input type="text" name="name" required="" id="id_name" style="height: 25px;">
+                        <br>
+                        <input type="submit" id="id_high_score_submit" value="Save" style="font-size: 25px; width: 100%;">
+                    </form>
+                </div>
             </div>
             <h1>Top 10 High Scores</h1>
             <table class="table" style="font-size: 25px;">
