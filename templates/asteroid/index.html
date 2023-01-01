@@ -20,6 +20,7 @@
         score = 0
         rock_count = 5
         highest_score = 0
+        game_step_interval = 0
 
         function draw_image(image, entity, scale) {
             x = entity[X]
@@ -166,6 +167,7 @@
             for (i = 0; i < rock_count; i++) create_rock()
         }
         function go_home() {
+            clearTimeout(game_step_interval)
             clear_viewport()
             context.save()
             context.font = "30px Arial";
