@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        viewport_width = 1000
+        viewport_height = 800
+        HOME = 0; RUNNING = 1; PAUSED = 2;
+        game_state = HOME
+        X = 0; Y = 1; R = 2; DX = 3; DY = 4, TTL = 5;
+        max_lives = 2
+        lives = max_lives
+        score = 0
+
+        function draw_image(image, entity, scale) {
+            x = entity[X]
+            y = entity[Y]
+            rotation = entity[R]
+            context.save()
+            context.scale(scale, scale)
+            context.translate(x / scale, y / scale)
+            context.rotate(rotation * 3.1415 / 180)
+            context.translate(-image.width / 2, -image.height / 2)
+            context.drawImage(image, 0, 0);
+            context.restore()
+        }
+        function draw_score() {
+            context.save()
+            context.font = "14px Arial";
+            context.fillText(score, viewport_width - 100, 11);
+            if (lives > 0) context.fillText('A'.repeat(lives), viewport_width - 23, 11);
+            context.restore()
+        }
+        function clear_viewport() {
+            context.save()
+            context.beginPath();
+            context.fillStyle = "#FFF";
+            context.fillRect(0, 0, viewport_width, viewport_height);
+            context.stroke();
+            context.restore()
+        }
+        function move(x, dx, max_x) {
+            x += dx
+            if (x < 0) return max_x - 1
+            if (x >= max_x) return 0
+            return x
+        }
+        function move_entity(entity) {
+            entity[X] = move(entity[X], entity[DX], viewport_width)
+            entity[Y] = move(entity[Y], entity[DY], viewport_height)
+            if (entity.length >= TTL - 1) {
+                entity[TTL] -= 1
+            }
+            return entity
+        }
+        function compute_distance(entity1, entity2) {
+            dx = entity1[X] - entity2[X]
+            dy = entity1[Y] - entity2[Y]
+            return Math.sqrt(dx * dx + dy * dy)
+        }
+        function compute_speed(entity){
+            return Math.sqrt(entity[DX] * entity[DX] + entity[DY] * entity[DY])
+        }
+        function collided(entity1, entity2) {
+            return compute_distance(entity1, entity2) <= 20
+        }
+        function game_step() {
+            if (game_state != RUNNING) return
+            // Move
+            for (i = 0; i < rocks.length; i++) rocks[i] = move_entity(rocks[i])
+            for (i = 0; i < bullets.length; i++) bullets[i] = move_entity(bullets[i])
+            if (bullets.length > 0 && bullets[0][TTL] <= 0) bullets.shift()
+            move_entity(ship)
+
+            // Handle collisions
+            for (i = 0; i < rocks.length; i++) {
+                if (collided(rocks[i], ship)) {
+                    console.log('Ship collided with rock')
+                    handle_death()
+                    break
+                }
+                for (j = 0; j < bullets.length; j++) {
+                    if (collided(rocks[i], bullets[j])) {
+                        console.log('Bullet collided with rock')
+                        score += Math.round(10 + compute_speed(ship))
+                        rocks.splice(i, 1)
+                        bullets.splice(j, 1)
+                        i -= 1
+                        break
+                    }
+                }
+            }
+            if (rocks.length == 0) {    
+                for (i = 0; i < 3; i++) create_rock()
+            }
+            for (j = 0; j < bullets.length; j++) {
+                if (collided(ship, bullets[j])) {
+                    console.log('Bullet collided with ship')
+                    handle_death()
+                    break
+                }
+            }
+
+            // Draw
+            clear_viewport()
+            for (i = 0; i < rocks.length; i++) draw_image(rock_image, rocks[i], 0.05)
+            for (i = 0; i < bullets.length; i++) draw_image(bullet_image, bullets[i], 0.05)
+            draw_image(ship_image, ship, 0.05)
+            draw_score()
+        }
+        function pause() {
+            game_state = PAUSED
+            clearTimeout(game_step_interval)
+        }
+        function unpause() {
+            game_state = RUNNING
+            game_step_interval = setInterval(game_step, 33)
+        }
+        function toggle_pause() {
+            if (game_state == PAUSED) unpause()
+            else pause()
+        }
+        function create_bullet() {
+            speed = 20
+            dx = speed * Math.cos(ship[R] / 180 * 3.1415)
+            dy = speed * Math.sin(ship[R] / 180 * 3.1415)
+            x = ship[X] + 25 * Math.cos(ship[R] / 180 * 3.1415)
+            y = ship[Y] + 25 * Math.sin(ship[R] / 180 * 3.1415)
+            time_to_live = (viewport_height - 25) / speed
+            new_bullet = [x, y, ship[R], dx, dy, time_to_live]
+            bullets.push(new_bullet)
+        }
+        function create_rock() {
+            rock_ok = false
+            while (!rock_ok) {
+                speed = 2
+                r = Math.random() * 2 * 3.1415
+                dx = speed * Math.cos(r)
+                dy = speed * Math.sin(r)
+                x = Math.random() * viewport_width
+                y = Math.random() * viewport_width
+                new_rock = [x, y, 0, dx, dy]
+                if (compute_distance(new_rock, ship) > 50) rock_ok = true
+            }
+            rocks.push(new_rock)
+        }
+        function reset_game() {
+            ship = [viewport_width / 2, viewport_height / 2, -90, 0, 0]
+            bullets = []
+            last_bullet_time = Date.now()
+            bullet_cooldown = 200
+            rocks = []
+            for (i = 0; i < 3; i++) create_rock()
+        }
+        function go_home() {
+            clear_viewport()
+            context.save()
+            context.font = "30px Arial";
+            context.fillText("Zeke and Zach", 100, 100);
+            context.fillText("Asteroid Game", 100, 130);
+            context.font = "20px Arial";
+            context.fillText("Press space to play", 100, 200);
+            context.restore()
+            game_state = HOME
+        }
+        function handle_death() {
+            lives -= 1
+            console.log('Lives', lives)
+            if (lives < 0) {
+                pause()
+                setTimeout(go_home, 500)
+                return
+            }
+            reset_game()
+        }
+        $(function() {
+            var canvas = document.getElementById('viewport')
+            console.log(canvas)
+            context = canvas.getContext('2d')
+
+            ship_image = new Image();
+            ship_image.src = "{% static 'asteroid/arrow.png' %}"
+            bullet_image = new Image();
+            bullet_image.src = "{% static 'asteroid/laser.png' %}"
+            rock_image = new Image();
+            rock_image.src = "{% static 'asteroid/rock.png' %}"
+
+            document.addEventListener('keydown', (event) => {
+                console.log(event.code)
+                if (game_state == HOME) {
+                    if (event.code === "Space") {
+                        console.log('Starting game')
+                        score = 0
+                        reset_game()
+                        lives = max_lives
+                        unpause()
+                    }
+                    return
+                }
+
+                if (event.code === "KeyR") go_home()
+                else if (event.code === "KeyP") toggle_pause()
+
+                if (game_state == PAUSED) return
+                check_speed = 0
+                if (event.code === "ArrowUp") {
+                    ship[DX] += Math.cos(ship[R] / 180 * 3.1415)
+                    ship[DY] += Math.sin(ship[R] / 180 * 3.1415)
+                    max_speed = 10
+                    if (compute_speed(ship) > max_speed) {
+                        ship[DX] = max_speed * Math.cos(ship[R] / 180 * 3.1415)
+                        ship[DY] = max_speed * Math.sin(ship[R] / 180 * 3.1415)                
+                    }
+                }
+                else if (event.code === "ArrowDown") {
+                    ship[DX] -= Math.cos(ship[R] / 180 * 3.1415)
+                    ship[DY] -= Math.sin(ship[R] / 180 * 3.1415)
+                    check_speed = 1
+                }
+                else if (event.code === "ArrowLeft")  ship[2] -= 10
+                else if (event.code === "ArrowRight") ship[2] += 10
+                else if (event.code === "Space") {
+                    now = Date.now()
+                    if ((now - last_bullet_time) > bullet_cooldown) {
+                        create_bullet()
+                        last_bullet_time = now
+                    }
+                }
+            });
+
+            go_home()
+        })
+    </script>
+</head>
+<body>
+    <h2>Astroid</h2>
+
+    <canvas id="viewport" width="1000" height="800" style="border:1px solid #000000;"></canvas>
+</body>
+</html>
