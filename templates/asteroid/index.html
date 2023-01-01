@@ -19,6 +19,7 @@
         lives = max_lives
         score = 0
         rock_count = 5
+        highest_score = 0
 
         function draw_image(image, entity, scale) {
             x = entity[X]
@@ -173,8 +174,11 @@
             context.fillText("Asteroid Game", 100, 130);
             context.font = "20px Arial";
             context.fillText("Press space to play", 100, 200);
-            if (score != 0) {
-                context.fillText("Your score was " + score + " !", 100, 250);
+            if (score > 0) context.fillText("Your score was " + score + " !", 100, 250);
+            if (score > highest_score) highest_score = score
+            if (highest_score != 0) {
+                $("#id_new_high_score").removeAttr("hidden")
+                $("#id_high_score").html(highest_score)
             }
             context.restore()
             game_state = HOME
@@ -274,19 +278,25 @@
     </script>
 </head>
 <body>
-    <table><tr><td>
-    <canvas id="viewport" style="border:1px solid #000000;" width="1000" height="800"></canvas>
-    </td><td style="vertical-align: top; padding-left: 15px;">
-    <h1>Top 10 High Scores</h1>
-    <table class="table" style="font-size: 25px;">
-        <tbody>
-            {% for score in high_scores %}
-                <tr>
-                    <td style="width: 100px;">{{ score.score }}</td><td style="width: 150px;">{{ score.name }}</td><td>{{ score.date }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    </td></tr></table>
+    <table>
+    <tr>
+        <td><canvas id="viewport" style="border:1px solid #000000;" width="1000" height="800"></canvas></td>
+        <td style="vertical-align: top; padding-left: 15px;">
+            <div id="id_new_high_score" hidden>
+                <h1>Highest Score Today</h1>
+                <span  style="font-size: 25px;" id="id_high_score"></span>
+            </div>
+            <h1>Top 10 High Scores</h1>
+            <table class="table" style="font-size: 25px;">
+                <tbody>
+                    {% for score in high_scores %}
+                        <tr>
+                            <td style="width: 100px;">{{ score.score }}</td><td style="width: 150px;">{{ score.name }}</td><td>{{ score.date }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </td>
+    </tr></table>
 </body>
 </html>
