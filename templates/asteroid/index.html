@@ -14,6 +14,19 @@
                 this.speed = speed
             }
         }
+        class Entity {
+            constructor(x, y, r, dx, dy) {
+                this.x = x
+                this.y = y
+                this.r = r
+                this.dx = dx
+                this.dy = dy
+                this.ttl = null
+            }
+            speed() {
+                return Math.sqrt(this.dx * this.dx + this.dy * this.dy)
+            }
+        }
 
         viewport_width = 1000
         viewport_height = 800
@@ -22,7 +35,6 @@
         forward_acceleration_timeout = 0
         left_rotation_timeout = 0
         right_rotation_timeout = 0
-        X = 0; Y = 1; R = 2; DX = 3; DY = 4, TTL = 5;
         max_lives = 2
         lives = max_lives
         score = 0
@@ -39,14 +51,13 @@
         rock_image_key = 'rock'
         ship_image_key = 'arrow'
 
+        background = new Entity(viewport_width / 2, viewport_height / 2, 0, 0, 0)
+
         function draw_image(image_key, entity, scale) {
-            x = entity[X]
-            y = entity[Y]
-            rotation = entity[R]
             context.save()
             context.scale(scale, scale)
-            context.translate(x / scale, y / scale)
-            context.rotate(rotation * 3.1415 / 180)
+            context.translate(entity.x / scale, entity.y / scale)
+            context.rotate(entity.r * 3.1415 / 180)
             context.translate(-images[image_key].width / 2, -images[image_key].height / 2)
             context.drawImage(images[image_key], 0, 0);
             context.restore()
@@ -60,13 +71,7 @@
             context.restore()
         }
         function clear_viewport() {
-            //context.save()
-            //context.beginPath();
-            //context.fillStyle = "#FFF";
-            //context.fillRect(0, 0, viewport_width, viewport_height);
-            //context.stroke();
-            //context.restore()
-            draw_image(background_image_key, [viewport_width / 2, viewport_height / 2], 2)
+            draw_image(background_image_key, background, 2)
         }
         function move(x, dx, max_x) {
             x += dx
@@ -75,20 +80,17 @@
             return x
         }
         function move_entity(entity) {
-            entity[X] = move(entity[X], entity[DX], viewport_width)
-            entity[Y] = move(entity[Y], entity[DY], viewport_height)
-            if (entity.length >= TTL - 1) {
-                entity[TTL] -= 1
+            entity.x = move(entity.x, entity.dx, viewport_width)
+            entity.y = move(entity.y, entity.dy, viewport_height)
+            if (entity.ttl !== null) {
+                entity.ttl -= 1
             }
             return entity
         }
         function compute_distance(entity1, entity2) {
-            dx = entity1[X] - entity2[X]
-            dy = entity1[Y] - entity2[Y]
+            dx = entity1.x - entity2.x
+            dy = entity1.y - entity2.y
             return Math.sqrt(dx * dx + dy * dy)
-        }
-        function compute_speed(entity){
-            return Math.sqrt(entity[DX] * entity[DX] + entity[DY] * entity[DY])
         }
         function collided(entity1, entity2) {
             return compute_distance(entity1, entity2) <= 20
@@ -98,7 +100,7 @@
             // Move
             for (i = 0; i < rocks.length; i++) rocks[i] = move_entity(rocks[i])
             for (i = 0; i < bullets.length; i++) bullets[i] = move_entity(bullets[i])
-            if (bullets.length > 0 && bullets[0][TTL] <= 0) bullets.shift()
+            if (bullets.length > 0 && bullets[0].ttl <= 0) bullets.shift()
             move_entity(ship)
 
             // Handle collisions
@@ -111,7 +113,7 @@
                 for (j = 0; j < bullets.length; j++) {
                     if (collided(rocks[i], bullets[j])) {
                         console.log('Bullet collided with rock')
-                        score += 10 + Math.round(compute_speed(ship))
+                        score += 10 + Math.round(ship.speed())
                         if (left_rotation_timeout != 0 || right_rotation_timeout != 0) score += 10
                         rocks.splice(i, 1)
                         bullets.splice(j, 1)
@@ -145,12 +147,13 @@
             else pause()
         }
         function create_bullet() {
-            dx = active_bullet.speed * Math.cos(ship[R] / 180 * 3.1415)
-            dy = active_bullet.speed * Math.sin(ship[R] / 180 * 3.1415)
-            x = ship[X] + 25 * Math.cos(ship[R] / 180 * 3.1415)
-            y = ship[Y] + 25 * Math.sin(ship[R] / 180 * 3.1415)
+            dx = active_bullet.speed * Math.cos(ship.r / 180 * 3.1415)
+            dy = active_bullet.speed * Math.sin(ship.r / 180 * 3.1415)
+            x = ship.x + 25 * Math.cos(ship.r / 180 * 3.1415)
+            y = ship.y + 25 * Math.sin(ship.r / 180 * 3.1415)
             time_to_live = (viewport_height - 25) / active_bullet.speed
-            new_bullet = [x, y, ship[R], dx, dy, time_to_live]
+            new_bullet = new Entity(x, y, ship.r, dx, dy)
+            new_bullet.ttl = time_to_live
             bullets.push(new_bullet)
         }
         function create_rock() {
@@ -162,13 +165,13 @@
                 dy = speed * Math.sin(r)
                 x = Math.random() * viewport_width
                 y = Math.random() * viewport_width
-                new_rock = [x, y, 0, dx, dy]
+                new_rock = new Entity(x, y, 0, dx, dy)
                 if (compute_distance(new_rock, ship) > 50) rock_ok = true
             }
             rocks.push(new_rock)
         }
         function reset_game() {
-            ship = [viewport_width / 2, viewport_height / 2, -90, 0, 0]
+            ship = new Entity(viewport_width / 2, viewport_height / 2, -90, 0, 0)
             bullets = []
             last_bullet_time = Date.now()
             bullet_cooldown = 200
@@ -207,29 +210,28 @@
             reset_game()
         }
         function forward_acceleration() {
-            old_dx = ship[DX]
-            old_dy = ship[DY]
-            ship[DX] += 2 * Math.cos(ship[R] / 180 * 3.1415)
-            ship[DY] += 2 * Math.sin(ship[R] / 180 * 3.1415)
+            old_dx = ship.dx
+            old_dy = ship.dy
+            ship.dx += 2 * Math.cos(ship.r / 180 * 3.1415)
+            ship.dy += 2 * Math.sin(ship.r / 180 * 3.1415)
             max_speed = 10
-            if (compute_speed(ship) > max_speed) {
-                ship[DX] = old_dx
-                ship[DY] = old_dy
+            if (ship.speed() > max_speed) {
+                ship.dx = old_dx
+                ship.dy = old_dy
             } else {
                 forward_acceleration_timeout = setTimeout(forward_acceleration, 200)
             }
         }
         function left_rotation() {
-            ship[2] -= 5
+            ship.r -= 5
             left_rotation_timeout = setTimeout(left_rotation, 25)
         }
         function right_rotation() {
-            ship[2] += 5
+            ship.r += 5
             right_rotation_timeout = setTimeout(right_rotation, 25)
         }
         $(function() {
             var canvas = document.getElementById('viewport')
-            console.log(canvas)
             context = canvas.getContext('2d')
 
             images['arrow'] = new Image()
