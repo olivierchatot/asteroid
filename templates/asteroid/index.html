@@ -107,13 +107,6 @@
                 for (i = 0; i < rock_count; i++) create_rock()
                 rock_count += 3
             }
-            for (j = 0; j < bullets.length; j++) {
-                if (collided(ship, bullets[j])) {
-                    console.log('Bullet collided with ship')
-                    handle_death()
-                    break
-                }
-            }
 
             // Draw
             clear_viewport()
