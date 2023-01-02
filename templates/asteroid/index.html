@@ -7,6 +7,15 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        class Bullet {
+            constructor(src, scale, speed) {
+                this.image = new Image()
+                this.image.src = src
+                this.scale = scale
+                this.speed = speed
+            }
+        }
+
         viewport_width = 1000
         viewport_height = 800
         HOME = 0; RUNNING = 1; PAUSED = 2;
@@ -21,6 +30,11 @@
         rock_count = 5
         highest_score = 0
         game_step_interval = 0
+
+        bullet_laser = new Bullet("{% static 'asteroid/laser.gif' %}", 0.05, 20)
+        bullet_saw = new Bullet("{% static 'asteroid/saw.gif' %}", 0.15, 10)
+
+        active_bullet = bullet_saw
 
         function draw_image(image, entity, scale) {
             x = entity[X]
@@ -111,7 +125,7 @@
             // Draw
             clear_viewport()
             for (i = 0; i < rocks.length; i++) draw_image(rock_image, rocks[i], 0.05)
-            for (i = 0; i < bullets.length; i++) draw_image(bullet_image, bullets[i], 0.15)
+            for (i = 0; i < bullets.length; i++) draw_image(active_bullet.image, bullets[i], active_bullet.scale)
             draw_image(ship_image, ship, 0.05)
             draw_score()
         }
@@ -128,12 +142,11 @@
             else pause()
         }
         function create_bullet() {
-            speed = 20
-            dx = speed * Math.cos(ship[R] / 180 * 3.1415)
-            dy = speed * Math.sin(ship[R] / 180 * 3.1415)
+            dx = active_bullet.speed * Math.cos(ship[R] / 180 * 3.1415)
+            dy = active_bullet.speed * Math.sin(ship[R] / 180 * 3.1415)
             x = ship[X] + 25 * Math.cos(ship[R] / 180 * 3.1415)
             y = ship[Y] + 25 * Math.sin(ship[R] / 180 * 3.1415)
-            time_to_live = (viewport_height - 25) / speed
+            time_to_live = (viewport_height - 25) / active_bullet.speed
             new_bullet = [x, y, ship[R], dx, dy, time_to_live]
             bullets.push(new_bullet)
         }
