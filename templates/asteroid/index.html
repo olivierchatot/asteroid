@@ -118,7 +118,7 @@
             // Draw
             clear_viewport()
             for (i = 0; i < rocks.length; i++) draw_image(rock_image, rocks[i], 0.05)
-            for (i = 0; i < bullets.length; i++) draw_image(bullet_image, bullets[i], 0.05)
+            for (i = 0; i < bullets.length; i++) draw_image(bullet_image, bullets[i], 0.15)
             draw_image(ship_image, ship, 0.05)
             draw_score()
         }
@@ -229,7 +229,7 @@
             ship_image = new Image();
             ship_image.src = "{% static 'asteroid/arrow.png' %}"
             bullet_image = new Image();
-            bullet_image.src = "{% static 'asteroid/laser.png' %}"
+            bullet_image.src = "{% static 'asteroid/saw.gif' %}"
             rock_image = new Image();
             rock_image.src = "{% static 'asteroid/rock.png' %}"
 
@@ -283,7 +283,7 @@
 <body>
     <table>
     <tr>
-        <td><canvas id="viewport" style="border:1px solid #000000;" width="1000" height="800"></canvas></td>
+        <td><canvas id="viewport" style="border:1px solid #000000;" width="1000" height="800">Your browser does not support Canvas.</canvas></td>
         <td style="vertical-align: top; padding-left: 15px;">
             <div id="id_new_high_score" hidden>
                 <h1>Highest Score Today: <span id="id_high_score"></span></h1>
