@@ -54,6 +54,11 @@
         background = new Entity(viewport_width / 2, viewport_height / 2, 0, 0, 0)
 
         function draw_image(image_key, entity, scale) {
+            image = images[image_key]
+            if (image === undefined) {
+                console.log('Undefined image', image_key)
+                return
+            }
             context.save()
             context.scale(scale, scale)
             context.translate(entity.x / scale, entity.y / scale)
@@ -249,7 +254,6 @@
             images['background_pickaxe'].onload = go_home
 
             document.addEventListener('keyup', (event) => {
-                console.log('keyup', event.code)
                 if (event.code === "ArrowUp") {
                     clearTimeout(forward_acceleration_timeout)
                     forward_acceleration_timeout = 0
