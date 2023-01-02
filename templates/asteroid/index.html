@@ -8,9 +8,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         class Bullet {
-            constructor(src, scale, speed) {
-                this.image = new Image()
-                this.image.src = src
+            constructor(image_key, scale, speed) {
+                this.image_key = image_key
                 this.scale = scale
                 this.speed = speed
             }
@@ -31,12 +30,16 @@
         highest_score = 0
         game_step_interval = 0
 
-        bullet_laser = new Bullet("{% static 'asteroid/laser.gif' %}", 0.05, 20)
-        bullet_saw = new Bullet("{% static 'asteroid/saw.gif' %}", 0.15, 10)
+        images = {}
+        bullet_laser = new Bullet('laser', 0.05, 20)
+        bullet_saw = new Bullet('saw', 0.15, 10)
 
         active_bullet = bullet_saw
+        background_image_key = 'background_pickaxe'
+        rock_image_key = 'rock'
+        ship_image_key = 'arrow'
 
-        function draw_image(image, entity, scale) {
+        function draw_image(image_key, entity, scale) {
             x = entity[X]
             y = entity[Y]
             rotation = entity[R]
@@ -44,8 +47,8 @@
             context.scale(scale, scale)
             context.translate(x / scale, y / scale)
             context.rotate(rotation * 3.1415 / 180)
-            context.translate(-image.width / 2, -image.height / 2)
-            context.drawImage(image, 0, 0);
+            context.translate(-images[image_key].width / 2, -images[image_key].height / 2)
+            context.drawImage(images[image_key], 0, 0);
             context.restore()
         }
         function draw_score() {
@@ -63,7 +66,7 @@
             //context.fillRect(0, 0, viewport_width, viewport_height);
             //context.stroke();
             //context.restore()
-            draw_image(background_image, [viewport_width / 2, viewport_height / 2], 2)
+            draw_image(background_image_key, [viewport_width / 2, viewport_height / 2], 2)
         }
         function move(x, dx, max_x) {
             x += dx
@@ -124,9 +127,9 @@
 
             // Draw
             clear_viewport()
-            for (i = 0; i < rocks.length; i++) draw_image(rock_image, rocks[i], 0.05)
-            for (i = 0; i < bullets.length; i++) draw_image(active_bullet.image, bullets[i], active_bullet.scale)
-            draw_image(ship_image, ship, 0.05)
+            for (i = 0; i < rocks.length; i++) draw_image(rock_image_key, rocks[i], 0.05)
+            for (i = 0; i < bullets.length; i++) draw_image(active_bullet.image_key, bullets[i], active_bullet.scale)
+            draw_image(ship_image_key, ship, 0.05)
             draw_score()
         }
         function pause() {
@@ -229,15 +232,17 @@
             console.log(canvas)
             context = canvas.getContext('2d')
 
-            background_image = new Image()
-            background_image.src = "{% static 'asteroid/background-pickaxe.jpg' %}"
-            background_image.onload = go_home
-            ship_image = new Image();
-            ship_image.src = "{% static 'asteroid/arrow.png' %}"
-            bullet_image = new Image();
-            bullet_image.src = "{% static 'asteroid/saw.gif' %}"
-            rock_image = new Image();
-            rock_image.src = "{% static 'asteroid/rock.png' %}"
+            images['arrow'] = new Image()
+            images['arrow'].src = "{% static 'asteroid/arrow.png' %}"
+            images['rock'] = new Image()
+            images['rock'].src = "{% static 'asteroid/rock.png' %}"
+            images['laser'] = new Image()
+            images['laser'].src = "{% static 'asteroid/laser.gif' %}"
+            images['saw'] = new Image()
+            images['saw'].src = "{% static 'asteroid/saw.gif' %}"
+            images['background_pickaxe'] = new Image()
+            images['background_pickaxe'].src = "{% static 'asteroid/background-pickaxe.jpg' %}"
+            images['background_pickaxe'].onload = go_home
 
             document.addEventListener('keyup', (event) => {
                 console.log('keyup', event.code)
