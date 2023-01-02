@@ -45,11 +45,14 @@
         images = {}
         bullet_laser = new Bullet('laser', 0.05, 20)
         bullet_saw = new Bullet('saw', 0.15, 10)
+        bullet_lightning = new Bullet('lightning', 0.1, 10)
 
-        active_bullet = bullet_saw
+        active_bullet = bullet_lightning
         background_image_key = 'background_pickaxe'
         rock_image_key = 'rock'
-        ship_image_key = 'ship1'
+        ship_image_key_coasting = 'ship2'
+        ship_image_key_accelerating = 'ship2_flame'
+        ship_image_key = ship_image_key_coasting
 
         background = new Entity(viewport_width / 2, viewport_height / 2, 0, 0, 0)
 
@@ -215,6 +218,7 @@
             reset_game()
         }
         function forward_acceleration() {
+            ship_image_key = ship_image_key_accelerating
             old_dx = ship.dx
             old_dy = ship.dy
             ship.dx += 2 * Math.cos(ship.r / 180 * 3.1415)
@@ -243,12 +247,20 @@
             images['arrow'].src = "{% static 'asteroid/arrow.png' %}"
             images['ship1'] = new Image()
             images['ship1'].src = "{% static 'asteroid/ship1.gif' %}"
+            images['ship1_flame'] = new Image()
+            images['ship1_flame'].src = "{% static 'asteroid/ship1_flame.gif' %}"
+            images['ship2'] = new Image()
+            images['ship2'].src = "{% static 'asteroid/ship2.gif' %}"
+            images['ship2_flame'] = new Image()
+            images['ship2_flame'].src = "{% static 'asteroid/ship2_flame.gif' %}"
             images['rock'] = new Image()
             images['rock'].src = "{% static 'asteroid/rock.png' %}"
             images['laser'] = new Image()
             images['laser'].src = "{% static 'asteroid/laser.gif' %}"
             images['saw'] = new Image()
             images['saw'].src = "{% static 'asteroid/saw.gif' %}"
+            images['lightning'] = new Image()
+            images['lightning'].src = "{% static 'asteroid/lightning.gif' %}"
             images['background_pickaxe'] = new Image()
             images['background_pickaxe'].src = "{% static 'asteroid/background-pickaxe.jpg' %}"
             images['background_pickaxe'].onload = go_home
@@ -256,6 +268,7 @@
             document.addEventListener('keyup', (event) => {
                 if (event.code === "ArrowUp") {
                     clearTimeout(forward_acceleration_timeout)
+                    ship_image_key = ship_image_key_coasting
                     forward_acceleration_timeout = 0
                 }
                 else if (event.code === "ArrowLeft") {
