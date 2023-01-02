@@ -35,12 +35,12 @@
         forward_acceleration_timeout = 0
         left_rotation_timeout = 0
         right_rotation_timeout = 0
+        game_step_interval = 0
         max_lives = 2
         lives = max_lives
         score = 0
         rock_count = 5
         highest_score = 0
-        game_step_interval = 0
 
         images = {}
         bullet_laser = new Bullet('laser', 0.05, 20)
@@ -49,7 +49,7 @@
         active_bullet = bullet_saw
         background_image_key = 'background_pickaxe'
         rock_image_key = 'rock'
-        ship_image_key = 'arrow'
+        ship_image_key = 'ship1'
 
         background = new Entity(viewport_width / 2, viewport_height / 2, 0, 0, 0)
 
@@ -131,7 +131,7 @@
             clear_viewport()
             for (i = 0; i < rocks.length; i++) draw_image(rock_image_key, rocks[i], 0.05)
             for (i = 0; i < bullets.length; i++) draw_image(active_bullet.image_key, bullets[i], active_bullet.scale)
-            draw_image(ship_image_key, ship, 0.05)
+            draw_image(ship_image_key, ship, 0.15)
             draw_score()
         }
         function pause() {
@@ -236,6 +236,8 @@
 
             images['arrow'] = new Image()
             images['arrow'].src = "{% static 'asteroid/arrow.png' %}"
+            images['ship1'] = new Image()
+            images['ship1'].src = "{% static 'asteroid/ship1.gif' %}"
             images['rock'] = new Image()
             images['rock'].src = "{% static 'asteroid/rock.png' %}"
             images['laser'] = new Image()
