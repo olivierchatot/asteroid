@@ -301,7 +301,6 @@
             }
             for (i = 0; i < alien_ships.length; i++) alien_ships[i].maybe_create_child()
 
-
             // Draw
             clear_viewport()
             for (i = 0; i < rocks.length; i++) draw_sprite(rock_sprite, rocks[i])
@@ -334,10 +333,11 @@
             bullets.push(new_bullet)
         }
         function create_enemy_entity() {
-            position_ok = false
-            while (!position_ok) {
+            attempt_count = 0
+            while (attempt_count < 20) {
+                attempt_count += 1
                 new_entity = new Entity(Math.random() * viewport_width, Math.random() * viewport_width, 0, 0, 0)
-                if (compute_wrapped_distance(new_entity, ship) > 80) position_ok = true
+                if (compute_wrapped_distance(new_entity, ship) > 80) break
             }
             return new_entity
         }
