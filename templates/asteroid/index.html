@@ -89,6 +89,7 @@
                 super(0, 0, 0, 0, 0)
                 this.sprite = sprite
                 this.reset_time_to_shoot()
+                this.dr = 0.5
             }
             reset_time_to_shoot() {
                 this.time_to_shoot = Math.round(Math.random() * 50) + 50
@@ -100,6 +101,13 @@
                 }
                 this.reset_time_to_shoot()
                 aliens.push(new Alien(this, small_alien_sprite))
+            }
+            move() {
+                super.move()
+                this.r += this.dr
+                if (Math.abs(this.r) > 10) {
+                    this.dr *= -1
+                }
             }
         }
         class Alien extends Entity {
