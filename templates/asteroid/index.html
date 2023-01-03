@@ -95,6 +95,7 @@
             constructor(parent, sprite){
                 super(parent.x, parent.y, 0, ship.x - parent.x, ship.y - parent.y)
                 this.sprite = sprite
+                this.ttl = viewport_height / 3
                 this.set_speed(3)
             }
         }
@@ -213,6 +214,7 @@
             for (i = 0; i < aliens.length; i++) aliens[i] = move_entity(aliens[i])
             for (i = 0; i < bullets.length; i++) bullets[i] = move_entity(bullets[i])
             if (bullets.length > 0 && bullets[0].ttl <= 0) bullets.shift()
+            if (aliens.length > 0 && aliens[0].ttl <= 0) aliens.shift()
             move_entity(ship)
 
             // Handle collisions
@@ -305,7 +307,7 @@
             dy = ship.bullet.speed * Math.sin(ship.r / 180 * 3.1415)
             x = ship.x + 25 * Math.cos(ship.r / 180 * 3.1415)
             y = ship.y + 25 * Math.sin(ship.r / 180 * 3.1415)
-            time_to_live = (viewport_height - 25) / ship.bullet.speed
+            time_to_live = viewport_height / ship.bullet.speed
             new_bullet = new Entity(x, y, ship.r, dx, dy)
             new_bullet.ttl = time_to_live
             bullets.push(new_bullet)
