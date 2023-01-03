@@ -45,6 +45,11 @@
                 this.bullet = bullet
             }
         }
+        function wrapped_distance(a, b, width) {
+            d = Math.abs(a - b)
+            if (d > width / 2) return width - d
+            return d
+        }
 
         viewport_width = 1000
         viewport_height = 800
@@ -139,13 +144,13 @@
             }
             return entity
         }
-        function compute_distance(entity1, entity2) {
-            dx = entity1.x - entity2.x
-            dy = entity1.y - entity2.y
+        function compute_wrapped_distance(entity1, entity2) {
+            dx = wrapped_distance(entity1.x, entity2.x, viewport_width)
+            dy = wrapped_distance(entity1.y, entity2.y, viewport_height)
             return Math.sqrt(dx * dx + dy * dy)
         }
         function collided(entity1, entity2) {
-            return compute_distance(entity1, entity2) <= 25
+            return compute_wrapped_distance(entity1, entity2) <= 25
         }
         function game_step() {
             if (game_state != RUNNING) return
@@ -217,7 +222,7 @@
                 x = Math.random() * viewport_width
                 y = Math.random() * viewport_width
                 new_rock = new Entity(x, y, 0, dx, dy)
-                if (compute_distance(new_rock, ship) > 80) rock_ok = true
+                if (compute_wrapped_distance(new_rock, ship) > 80) rock_ok = true
             }
             rocks.push(new_rock)
         }
