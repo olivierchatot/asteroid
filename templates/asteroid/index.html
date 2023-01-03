@@ -70,7 +70,7 @@
         rock_image_key = 'rock'
         ship_zeke = new Ship(0, 6, 'ship1', 'ship1_flame', 0, bullet_saw)
         ship_zach = new Ship(1, 4, 'ship2', 'ship2_flame', 'ship2_break', bullet_lightning)
-        ship = ship_zach
+        ship = ship_zeke
         ship_image_key = ship.image_key_coasting
 
         background = new Entity(viewport_width / 2, viewport_height / 2, 0, 0, 0)
@@ -120,7 +120,7 @@
             return Math.sqrt(dx * dx + dy * dy)
         }
         function collided(entity1, entity2) {
-            return compute_distance(entity1, entity2) <= 20
+            return compute_distance(entity1, entity2) <= 25
         }
         function game_step() {
             if (game_state != RUNNING) return
@@ -206,6 +206,9 @@
         }
         function go_home() {
             clearTimeout(game_step_interval)
+            game_state = HOME
+            rock_count = 5
+
             clear_viewport()
             context.save()
             context.font = "30px Arial";
@@ -215,17 +218,35 @@
             context.font = "20px Arial";
             context.fillText("Press space to play", 100, 200);
             context.font = "30px Arial";
-            if (score > 0) context.fillText("Your score was " + score + " !", 100, 270);
+            if (score > 0) context.fillText("You scored " + score + " !", 100, 270);
+            ship_zeke.place_at(150, 400, 0)
+            ship_zach.place_at(150, 550, 0)
+            draw_image(ship_zeke.image_key_coasting, ship_zeke, 0.15)
+            draw_image(ship_zach.image_key_coasting, ship_zach, 0.15)
+            context.font = "20px Arial";
+            context.fillText("Zeke's ship", 250, 390);
+            context.fillText("Zach's ship", 250, 540);
+            context.fillText("Rotation Boost makes ship turn faster.", 250, 420);
+            context.fillText("Gravity Breaks slow down ship.", 250, 570);
+            context.lineWidth = "6";
+            context.strokeStyle = "red";
+            context.beginPath();
+            if (ship === ship_zeke) {
+                context.rect(100, 350, 500, 100)
+            } else {
+                context.rect(100, 500, 500, 100)
+
+            }
+            context.stroke()
+
+            context.restore()
+
             if (score > highest_score) highest_score = score
             if (highest_score != 0) {
                 $("#id_new_high_score").removeAttr("hidden")
                 $("#id_high_score").html(highest_score)
                 $("#id_score").attr("value", highest_score)
             }
-            context.draw_image()
-            context.restore()
-            game_state = HOME
-            rock_count = 5
         }
         function handle_death() {
             lives -= 1
@@ -333,6 +354,11 @@
                         lives = max_lives
                         unpause()
                     }
+                    else if (event.code == "ArrowUp" || event.code == "ArrowDown") {
+                        if (ship === ship_zach) ship = ship_zeke
+                        else ship = ship_zach
+                        go_home()
+                    }
                     return
                 }
 
@@ -359,7 +385,7 @@
     <table>
     <tr>
         <td><canvas id="viewport" style="border:1px solid #000000;" width="1000" height="800">Your browser does not support Canvas.</canvas></td>
-        <td style="vertical-align: top; padding-left: 15px;">
+        <td style="vertical-align: top; padding-left: 15px; font-family: Arial;">
             <div id="id_new_high_score" hidden>
                 <h1>Highest Score Today: <span id="id_high_score"></span></h1>
                 <div style="font-size: 25px;">
