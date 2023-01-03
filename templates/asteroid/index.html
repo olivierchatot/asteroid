@@ -82,7 +82,6 @@
         rock_count = 5
         highest_score = 0
 
-        images = {}
         bullet_laser = new Bullet(new Sprite('laser', 0.05), 20)
         bullet_saw = new Bullet(new Sprite('saw', 0.15), 10)
         bullet_lightning = new Bullet(new Sprite('lightning', 0.1), 10)
@@ -344,28 +343,23 @@
             var canvas = document.getElementById('viewport')
             context = canvas.getContext('2d')
 
-            images['arrow'] = new Image()
-            images['arrow'].src = "{% static 'asteroid/arrow.png' %}"
-            images['ship1'] = new Image()
-            images['ship1'].src = "{% static 'asteroid/ship1.gif' %}"
-            images['ship1_flame'] = new Image()
-            images['ship1_flame'].src = "{% static 'asteroid/ship1_flame.gif' %}"
-            images['ship2'] = new Image()
-            images['ship2'].src = "{% static 'asteroid/ship2.gif' %}"
-            images['ship2_flame'] = new Image()
-            images['ship2_flame'].src = "{% static 'asteroid/ship2_flame.gif' %}"
-            images['ship2_break'] = new Image()
-            images['ship2_break'].src = "{% static 'asteroid/ship2_break.gif' %}"
-            images['rock'] = new Image()
-            images['rock'].src = "{% static 'asteroid/rock.png' %}"
-            images['laser'] = new Image()
-            images['laser'].src = "{% static 'asteroid/laser.gif' %}"
-            images['saw'] = new Image()
-            images['saw'].src = "{% static 'asteroid/saw.gif' %}"
-            images['lightning'] = new Image()
-            images['lightning'].src = "{% static 'asteroid/lightning.gif' %}"
-            images['background_space'] = new Image()
-            images['background_space'].src = "{% static 'asteroid/background_space.jpg' %}"
+            image_sources = {}
+            image_sources['arrow'] = "{% static 'asteroid/arrow.png' %}"
+            image_sources['ship1'] = "{% static 'asteroid/ship1.gif' %}"
+            image_sources['ship1_flame'] = "{% static 'asteroid/ship1_flame.gif' %}"
+            image_sources['ship2'] = "{% static 'asteroid/ship2.gif' %}"
+            image_sources['ship2_flame'] = "{% static 'asteroid/ship2_flame.gif' %}"
+            image_sources['ship2_break'] = "{% static 'asteroid/ship2_break.gif' %}"
+            image_sources['rock'] = "{% static 'asteroid/rock.png' %}"
+            image_sources['saw'] = "{% static 'asteroid/saw.gif' %}"
+            image_sources['lightning'] = "{% static 'asteroid/lightning.gif' %}"
+            image_sources['background_space'] = "{% static 'asteroid/background_space.jpg' %}"
+
+            images = {}
+            for (key in image_sources) {
+                images[key] = new Image()
+                images[key].src = image_sources[key]
+            }
             images['background_space'].onload = go_home
 
             document.addEventListener('keyup', (event) => {
