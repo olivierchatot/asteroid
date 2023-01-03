@@ -75,7 +75,7 @@
 
         background = new Entity(viewport_width / 2, viewport_height / 2, 0, 0, 0)
 
-        function draw_image(image_key, entity, scale) {
+        function draw_image(image_key, entity, scale, draw_mirror_entities = 1) {
             image = images[image_key]
             if (image === undefined) {
                 console.log('Undefined image', image_key)
@@ -88,6 +88,31 @@
             context.translate(-images[image_key].width / 2, -images[image_key].height / 2)
             context.drawImage(images[image_key], 0, 0);
             context.restore()
+
+            if (draw_mirror_entities === 1) {
+                edge_threshold = 15
+                mirror_entity = new Entity(entity.x, entity.y, entity.r, 0, 0)
+                if (entity.x < edge_threshold) {
+                    mirror_entity.x += viewport_width
+                    draw_image(image_key, mirror_entity, scale, 0)
+                    mirror_entity.x = entity.x
+                }
+                else if(entity.x >= viewport_width - edge_threshold) {
+                    mirror_entity.x -= viewport_width
+                    draw_image(image_key, mirror_entity, scale, 0)
+                    mirror_entity.x = entity.x
+                }
+                if (entity.y < edge_threshold) {
+                    mirror_entity.y += viewport_height
+                    draw_image(image_key, mirror_entity, scale, 0)
+                    mirror_entity.y = entity.y
+                }
+                else if(entity.y >= viewport_height - edge_threshold) {
+                    mirror_entity.y -= viewport_height
+                    draw_image(image_key, mirror_entity, scale, 0)
+                    mirror_entity.y = entity.y
+                }
+            }
         }
         function draw_score() {
             context.save()
