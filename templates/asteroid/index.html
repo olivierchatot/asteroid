@@ -61,6 +61,12 @@
                 else this.sprite.image_key = this.image_key_coasting
             }
         }
+        class AlienShip extends Entity {
+            constructor(sprite) {
+                super(0, 0, 0, 0, 0)
+                this.sprite = sprite
+            }
+        }
         function wrapped_distance(a, b, width) {
             d = Math.abs(a - b)
             if (d > width / 2) return width - d
@@ -88,6 +94,7 @@
 
         background_sprite = new Sprite('background_space', 1.21)
         rock_sprite = new Sprite('rock', 0.05)
+        small_alien_ship_sprite = new Sprite('small_alien_ship', 0.1)
         ship_zeke = new Ship(0, 6, 'ship1', 'ship1_flame', 0, 0.15, bullet_saw)
         ship_zach = new Ship(1, 4, 'ship2', 'ship2_flame', 'ship2_break', 0.15, bullet_lightning)
         ship = ship_zeke
@@ -170,6 +177,7 @@
             if (game_state != RUNNING) return
             // Move
             for (i = 0; i < rocks.length; i++) rocks[i] = move_entity(rocks[i])
+            for (i = 0; i < alien_ships.length; i++) alien_ships[i] = move_entity(alien_ships[i])
             for (i = 0; i < bullets.length; i++) bullets[i] = move_entity(bullets[i])
             if (bullets.length > 0 && bullets[0].ttl <= 0) bullets.shift()
             move_entity(ship)
@@ -192,6 +200,25 @@
                     }
                 }
             }
+            for (i = 0; i < alien_ships.length; i++) {
+                if (collided(alien_ships[i], ship)) {
+                    console.log('Ship collided with alien ship')
+                    handle_death()
+                    break
+                }
+                for (j = 0; j < bullets.length; j++) {
+                    if (collided(alien_ships[i], bullets[j])) {
+                        console.log('Bullet collided with alien ship')
+                        score += 1 + 4 * Math.round(ship.speed())
+                        alien_ships.splice(i, 1)
+                        bullets.splice(j, 1)
+                        i -= 1
+                        break
+                    }
+                }
+            }
+
+            // Create new enemies
             if (rocks.length == 0) {    
                 for (i = 0; i < rock_count; i++) create_rock()
                 rock_count += 3
@@ -200,6 +227,7 @@
             // Draw
             clear_viewport()
             for (i = 0; i < rocks.length; i++) draw_sprite(rock_sprite, rocks[i])
+            for (i = 0; i < alien_ships.length; i++) draw_sprite(alien_ships[i].sprite, alien_ships[i])
             for (i = 0; i < bullets.length; i++) draw_sprite(ship.bullet.sprite, bullets[i])
             draw_sprite(ship.sprite, ship)
             draw_score()
@@ -226,19 +254,31 @@
             new_bullet.ttl = time_to_live
             bullets.push(new_bullet)
         }
-        function create_rock() {
-            rock_ok = false
-            while (!rock_ok) {
-                speed = 2
-                r = Math.random() * 2 * 3.1415
-                dx = speed * Math.cos(r)
-                dy = speed * Math.sin(r)
+        function create_enemy_entity(speed) {
+            position_ok = false
+            while (!position_ok) {
                 x = Math.random() * viewport_width
                 y = Math.random() * viewport_width
-                new_rock = new Entity(x, y, 0, dx, dy)
-                if (compute_wrapped_distance(new_rock, ship) > 80) rock_ok = true
+                new_entity = new Entity(x, y, 0, 0, 0)
+                if (compute_wrapped_distance(new_entity, ship) > 80) position_ok = true
             }
+            r = Math.random() * 2 * 3.1415
+            new_entity.dx = speed * Math.cos(r)
+            new_entity.dy = speed * Math.sin(r)
+            return new_entity
+        }
+        function create_rock() {
+            new_rock = create_enemy_entity(2)
             rocks.push(new_rock)
+        }
+        function create_small_alien() {
+            new_alien = new AlienShip(small_alien_ship_sprite)
+            entity = create_enemy_entity(2)
+            new_alien.x = entity.x
+            new_alien.y = entity.y
+            new_alien.dx = entity.dx
+            new_alien.dy = entity.dy
+            alien_ships.push(new_alien)
         }
         function reset_game() {
             ship.place_at(viewport_width / 2, viewport_height / 2, -90)
@@ -246,7 +286,9 @@
             last_bullet_time = Date.now()
             bullet_cooldown = 200
             rocks = []
+            alien_ships = []
             for (i = 0; i < rock_count; i++) create_rock()
+            create_small_alien()
         }
         function go_home() {
             clearTimeout(game_step_interval)
@@ -282,7 +324,6 @@
 
             }
             context.stroke()
-
             context.restore()
 
             if (score > highest_score) highest_score = score
@@ -354,6 +395,8 @@
             image_sources['saw'] = "{% static 'asteroid/saw.gif' %}"
             image_sources['lightning'] = "{% static 'asteroid/lightning.gif' %}"
             image_sources['background_space'] = "{% static 'asteroid/background_space.jpg' %}"
+            image_sources['small_alien_ship'] = "{% static 'asteroid/small_alien_ship.gif' %}"
+            image_sources['small_alien'] = "{% static 'asteroid/small_alien.gif' %}"
 
             images = {}
             for (key in image_sources) {
