@@ -7,10 +7,15 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        class Bullet {
-            constructor(image_key, scale, speed) {
+        class Sprite {
+            constructor(image_key, scale) {
                 this.image_key = image_key
                 this.scale = scale
+            }
+        }
+        class Bullet {
+            constructor(sprite, speed) {
+                this.sprite = sprite
                 this.speed = speed
             }
         }
@@ -35,7 +40,7 @@
             }
         }
         class Ship extends Entity {
-            constructor(slowdown_enabled, rotation_rate, image_key_coasting, image_key_accelerating, image_key_breaking, bullet) {
+            constructor(slowdown_enabled, rotation_rate, image_key_coasting, image_key_accelerating, image_key_breaking, scale, bullet) {
                 super(0, 0, 0, 0, 0)
                 this.slowdown_enabled = slowdown_enabled
                 this.rotation_rate = rotation_rate
@@ -43,6 +48,17 @@
                 this.image_key_accelerating = image_key_accelerating
                 this.image_key_breaking = image_key_breaking
                 this.bullet = bullet
+                this.sprite = new Sprite(image_key_coasting, scale)
+            }
+            set_accelerating() {
+                this.sprite.image_key = this.image_key_accelerating
+            }
+            set_coasting() {
+                this.sprite.image_key = this.image_key_coasting
+            }
+            set_breaking() {
+                if (this.image_key_breaking) this.sprite.image_key = this.image_key_breaking
+                else this.sprite.image_key = this.image_key_coasting
             }
         }
         function wrapped_distance(a, b, width) {
@@ -67,31 +83,30 @@
         highest_score = 0
 
         images = {}
-        bullet_laser = new Bullet('laser', 0.05, 20)
-        bullet_saw = new Bullet('saw', 0.15, 10)
-        bullet_lightning = new Bullet('lightning', 0.1, 10)
+        bullet_laser = new Bullet(new Sprite('laser', 0.05), 20)
+        bullet_saw = new Bullet(new Sprite('saw', 0.15), 10)
+        bullet_lightning = new Bullet(new Sprite('lightning', 0.1), 10)
 
-        background_image_key = 'background_space'
-        rock_image_key = 'rock'
-        ship_zeke = new Ship(0, 6, 'ship1', 'ship1_flame', 0, bullet_saw)
-        ship_zach = new Ship(1, 4, 'ship2', 'ship2_flame', 'ship2_break', bullet_lightning)
+        background_sprite = new Sprite('background_space', 1.21)
+        rock_sprite = new Sprite('rock', 0.05)
+        ship_zeke = new Ship(0, 6, 'ship1', 'ship1_flame', 0, 0.15, bullet_saw)
+        ship_zach = new Ship(1, 4, 'ship2', 'ship2_flame', 'ship2_break', 0.15, bullet_lightning)
         ship = ship_zeke
-        ship_image_key = ship.image_key_coasting
 
         background = new Entity(viewport_width / 2, viewport_height / 2, 0, 0, 0)
 
-        function draw_image(image_key, entity, scale, draw_mirror_entities = 1) {
-            image = images[image_key]
+        function draw_sprite(sprite, entity, draw_mirror_entities = 1) {
+            image = images[sprite.image_key]
             if (image === undefined) {
                 console.log('Undefined image', image_key)
                 return
             }
             context.save()
-            context.scale(scale, scale)
-            context.translate(entity.x / scale, entity.y / scale)
+            context.scale(sprite.scale, sprite.scale)
+            context.translate(entity.x / sprite.scale, entity.y / sprite.scale)
             context.rotate(entity.r * 3.1415 / 180)
-            context.translate(-images[image_key].width / 2, -images[image_key].height / 2)
-            context.drawImage(images[image_key], 0, 0);
+            context.translate(-image.width / 2, -image.height / 2)
+            context.drawImage(image, 0, 0);
             context.restore()
 
             if (draw_mirror_entities === 1) {
@@ -99,22 +114,22 @@
                 mirror_entity = new Entity(entity.x, entity.y, entity.r, 0, 0)
                 if (entity.x < edge_threshold) {
                     mirror_entity.x += viewport_width
-                    draw_image(image_key, mirror_entity, scale, 0)
+                    draw_sprite(sprite, mirror_entity, 0)
                     mirror_entity.x = entity.x
                 }
                 else if(entity.x >= viewport_width - edge_threshold) {
                     mirror_entity.x -= viewport_width
-                    draw_image(image_key, mirror_entity, scale, 0)
+                    draw_sprite(sprite, mirror_entity, 0)
                     mirror_entity.x = entity.x
                 }
                 if (entity.y < edge_threshold) {
                     mirror_entity.y += viewport_height
-                    draw_image(image_key, mirror_entity, scale, 0)
+                    draw_sprite(sprite, mirror_entity, 0)
                     mirror_entity.y = entity.y
                 }
                 else if(entity.y >= viewport_height - edge_threshold) {
                     mirror_entity.y -= viewport_height
-                    draw_image(image_key, mirror_entity, scale, 0)
+                    draw_sprite(sprite, mirror_entity, 0)
                     mirror_entity.y = entity.y
                 }
             }
@@ -128,7 +143,7 @@
             context.restore()
         }
         function clear_viewport() {
-            draw_image(background_image_key, background, 1.21)
+            draw_sprite(background_sprite, background)
         }
         function move(x, dx, max_x) {
             x += dx
@@ -185,9 +200,9 @@
 
             // Draw
             clear_viewport()
-            for (i = 0; i < rocks.length; i++) draw_image(rock_image_key, rocks[i], 0.05)
-            for (i = 0; i < bullets.length; i++) draw_image(ship.bullet.image_key, bullets[i], ship.bullet.scale)
-            draw_image(ship_image_key, ship, 0.15)
+            for (i = 0; i < rocks.length; i++) draw_sprite(rock_sprite, rocks[i])
+            for (i = 0; i < bullets.length; i++) draw_sprite(ship.bullet.sprite, bullets[i])
+            draw_sprite(ship.sprite, ship)
             draw_score()
         }
         function pause() {
@@ -251,8 +266,8 @@
             if (score > 0) context.fillText("You scored " + score + " !", 100, 270);
             ship_zeke.place_at(150, 400, 0)
             ship_zach.place_at(150, 550, 0)
-            draw_image(ship_zeke.image_key_coasting, ship_zeke, 0.15)
-            draw_image(ship_zach.image_key_coasting, ship_zach, 0.15)
+            draw_sprite(ship_zeke.sprite, ship_zeke)
+            draw_sprite(ship_zach.sprite, ship_zach)
             context.font = "20px Arial";
             context.fillText("Zeke's ship", 250, 390);
             context.fillText("Zach's ship", 250, 540);
@@ -290,7 +305,7 @@
         }
         function acceleration(bootstrap = 0) {
             if (bootstrap == 1 && acceleration_timeout != 0) return
-            ship_image_key = ship.image_key_accelerating
+            ship.set_accelerating()
             old_dx = ship.dx
             old_dy = ship.dy
             ship.dx += 2 * Math.cos(ship.r / 180 * 3.1415)
@@ -305,7 +320,7 @@
         }
         function slowdown(bootstrap = 0) {
             if (bootstrap == 1 && slowdown_timeout != 0) return
-            ship_image_key = ship.image_key_breaking
+            ship.set_breaking()
             ship.dx *= 0.6
             ship.dy *= 0.6
             if (ship.speed() < 0.5) {
@@ -354,15 +369,16 @@
             images['background_space'].onload = go_home
 
             document.addEventListener('keyup', (event) => {
+                if (game_state == HOME) return
                 if (event.code === "ArrowUp") {
                     clearTimeout(acceleration_timeout)
                     acceleration_timeout = 0
-                    ship_image_key = ship.image_key_coasting
+                    ship.set_coasting()
                 }
                 else if(event.code === "ArrowDown" && ship.slowdown_enabled) {
                     clearTimeout(slowdown_timeout)
                     slowdown_timeout = 0
-                    ship_image_key = ship.image_key_coasting
+                    ship.set_coasting()
                 }
                 else if (event.code === "ArrowLeft") {
                     clearTimeout(left_rotation_timeout)
