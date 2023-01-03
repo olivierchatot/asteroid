@@ -146,7 +146,7 @@
         max_lives = 2
         lives = max_lives
         score = 0
-        rock_count = 5
+        enemy_round = 0
         highest_score = 0
 
         bullet_laser = new Bullet(new Sprite('laser', 0.05), 20)
@@ -286,12 +286,18 @@
             }
 
             // Create new enemies
-            if (rocks.length == 0) {    
+            if (rocks.length == 0 && alien_ships.length == 0) {
+                rock_count = 3
+                small_alien_count = 0
+                if (enemy_round >= 1) rock_count += 2
+                if (enemy_round >= 2) rock_count += 2
+                if (enemy_round >= 3) small_alien_count += 1
+                if (enemy_round >= 4) rock_count += 2
+                if (enemy_round >= 5) rock_count += 2
+                if (enemy_round >= 6) small_alien_count += 1
                 for (i = 0; i < rock_count; i++) create_rock()
-                rock_count += 3
-            }
-            if (alien_ships.length == 0) {
-                create_small_alien_ship()
+                for (i = 0; i < small_alien_count; i++) create_small_alien_ship()
+                enemy_round += 1
             }
             for (i = 0; i < alien_ships.length; i++) alien_ships[i].maybe_create_child()
 
@@ -345,7 +351,7 @@
             new_alien.set_speed(2)
             alien_ships.push(new_alien)
         }
-        function reset_game() {
+        function reset_ship() {
             ship.place_at(viewport_width / 2, viewport_height / 2, -90)
             bullets = []
             last_bullet_time = Date.now()
@@ -353,13 +359,16 @@
             rocks = []
             alien_ships = []
             aliens = []
-            for (i = 0; i < rock_count; i++) create_rock()
-            create_small_alien_ship()
+        }
+        function reset_game() {
+            reset_ship()
+            score = 0
+            lives = max_lives
+            enemy_round = 0
         }
         function go_home() {
             clearTimeout(game_step_interval)
             game_state = HOME
-            rock_count = 5
 
             clear_viewport()
             context.save()
@@ -407,7 +416,8 @@
                 setTimeout(go_home, 500)
                 return
             }
-            reset_game()
+            enemy_round -= 1 // Repeat last round
+            reset_ship()
         }
         function acceleration(bootstrap = 0) {
             if (bootstrap == 1 && acceleration_timeout != 0) return
@@ -498,9 +508,7 @@
                 if (game_state == HOME) {
                     if (event.code === "Space") {
                         console.log('Starting game')
-                        score = 0
                         reset_game()
-                        lives = max_lives
                         unpause()
                     }
                     else if (event.code == "ArrowUp" || event.code == "ArrowDown") {
