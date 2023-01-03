@@ -47,7 +47,7 @@
             set_speed(desired_speed) {
                 var current_speed = this.speed()
                 if (current_speed < 0.1) {
-                    r = Math.random() * 2 * 3.1415
+                    var r = Math.random() * 2 * 3.1415
                     this.dx = desired_speed * Math.cos(r)
                     this.dy = desired_speed * Math.sin(r)
                     return
@@ -84,9 +84,19 @@
                 else this.sprite.image_key = this.image_key_coasting
             }
         }
+        class Rock extends Entity {
+            constructor(position_entity) {
+                super(position_entity.x, position_entity.y, Math.random() * 360, 0, 0)
+                this.dr = 2 * Math.random() - 1
+            }
+            move() {
+                super.move()
+                this.r += this.dr
+            }
+        }
         class AlienShip extends Entity {
-            constructor(sprite) {
-                super(0, 0, 0, 0, 0)
+            constructor(position_entity, sprite) {
+                super(position_entity.x, position_entity.y, position_entity.r, 0, 0)
                 this.sprite = sprite
                 this.reset_time_to_shoot()
                 this.dr = 0.5
@@ -317,30 +327,22 @@
             new_bullet.ttl = time_to_live
             bullets.push(new_bullet)
         }
-        function create_enemy_entity(speed) {
+        function create_enemy_entity() {
             position_ok = false
             while (!position_ok) {
-                x = Math.random() * viewport_width
-                y = Math.random() * viewport_width
-                new_entity = new Entity(x, y, 0, 0, 0)
+                new_entity = new Entity(Math.random() * viewport_width, Math.random() * viewport_width, 0, 0, 0)
                 if (compute_wrapped_distance(new_entity, ship) > 80) position_ok = true
             }
-            r = Math.random() * 2 * 3.1415
-            new_entity.dx = speed * Math.cos(r)
-            new_entity.dy = speed * Math.sin(r)
             return new_entity
         }
         function create_rock() {
-            new_rock = create_enemy_entity(2)
+            new_rock = new Rock(create_enemy_entity())
+            new_rock.set_speed(2)
             rocks.push(new_rock)
         }
         function create_small_alien_ship() {
-            new_alien = new AlienShip(small_alien_ship_sprite)
-            entity = create_enemy_entity(2)
-            new_alien.x = entity.x
-            new_alien.y = entity.y
-            new_alien.dx = entity.dx
-            new_alien.dy = entity.dy
+            new_alien = new AlienShip(create_enemy_entity(), small_alien_ship_sprite)
+            new_alien.set_speed(2)
             alien_ships.push(new_alien)
         }
         function reset_game() {
