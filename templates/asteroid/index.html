@@ -38,6 +38,18 @@
             speed() {
                 return Math.sqrt(this.dx * this.dx + this.dy * this.dy)
             }
+            set_speed(desired_speed) {
+                var current_speed = this.speed()
+                if (current_speed < 0.1) {
+                    r = Math.random() * 2 * 3.1415
+                    this.dx = desired_speed * Math.cos(r)
+                    this.dy = desired_speed * Math.sin(r)
+                    return
+                }
+                var coeff = desired_speed / current_speed
+                this.dx *= coeff
+                this.dy *= coeff
+            }
         }
         class Ship extends Entity {
             constructor(slowdown_enabled, rotation_rate, image_key_coasting, image_key_accelerating, image_key_breaking, scale, bullet) {
@@ -65,6 +77,25 @@
             constructor(sprite) {
                 super(0, 0, 0, 0, 0)
                 this.sprite = sprite
+                this.reset_time_to_shoot()
+            }
+            reset_time_to_shoot() {
+                this.time_to_shoot = Math.round(Math.random() * 50) + 50
+            }
+            maybe_create_child() {
+                if (this.time_to_shoot > 0) {
+                    this.time_to_shoot -= 1
+                    return
+                }
+                this.reset_time_to_shoot()
+                aliens.push(new Alien(this, small_alien_sprite))
+            }
+        }
+        class Alien extends Entity {
+            constructor(parent, sprite){
+                super(parent.x, parent.y, 0, ship.x - parent.x, ship.y - parent.y)
+                this.sprite = sprite
+                this.set_speed(3)
             }
         }
         function wrapped_distance(a, b, width) {
@@ -95,6 +126,7 @@
         background_sprite = new Sprite('background_space', 1.21)
         rock_sprite = new Sprite('rock', 0.05)
         small_alien_ship_sprite = new Sprite('small_alien_ship', 0.1)
+        small_alien_sprite = new Sprite('small_alien', 0.05)
         ship_zeke = new Ship(0, 6, 'ship1', 'ship1_flame', 0, 0.15, bullet_saw)
         ship_zach = new Ship(1, 4, 'ship2', 'ship2_flame', 'ship2_break', 0.15, bullet_lightning)
         ship = ship_zeke
@@ -178,6 +210,7 @@
             // Move
             for (i = 0; i < rocks.length; i++) rocks[i] = move_entity(rocks[i])
             for (i = 0; i < alien_ships.length; i++) alien_ships[i] = move_entity(alien_ships[i])
+            for (i = 0; i < aliens.length; i++) aliens[i] = move_entity(aliens[i])
             for (i = 0; i < bullets.length; i++) bullets[i] = move_entity(bullets[i])
             if (bullets.length > 0 && bullets[0].ttl <= 0) bullets.shift()
             move_entity(ship)
@@ -209,8 +242,25 @@
                 for (j = 0; j < bullets.length; j++) {
                     if (collided(alien_ships[i], bullets[j])) {
                         console.log('Bullet collided with alien ship')
-                        score += 1 + 4 * Math.round(ship.speed())
+                        score += 5 + 4 * Math.round(ship.speed())
                         alien_ships.splice(i, 1)
+                        bullets.splice(j, 1)
+                        i -= 1
+                        break
+                    }
+                }
+            }
+            for (i = 0; i < aliens.length; i++) {
+                if (collided(aliens[i], ship)) {
+                    console.log('Ship collided with alien')
+                    handle_death()
+                    break
+                }
+                for (j = 0; j < bullets.length; j++) {
+                    if (collided(aliens[i], bullets[j])) {
+                        console.log('Bullet collided with alien')
+                        score += 1 + 4 * Math.round(ship.speed())
+                        aliens.splice(i, 1)
                         bullets.splice(j, 1)
                         i -= 1
                         break
@@ -223,11 +273,17 @@
                 for (i = 0; i < rock_count; i++) create_rock()
                 rock_count += 3
             }
+            if (alien_ships.length == 0) {
+                create_small_alien_ship()
+            }
+            for (i = 0; i < alien_ships.length; i++) alien_ships[i].maybe_create_child()
+
 
             // Draw
             clear_viewport()
             for (i = 0; i < rocks.length; i++) draw_sprite(rock_sprite, rocks[i])
             for (i = 0; i < alien_ships.length; i++) draw_sprite(alien_ships[i].sprite, alien_ships[i])
+            for (i = 0; i < aliens.length; i++) draw_sprite(aliens[i].sprite, aliens[i])
             for (i = 0; i < bullets.length; i++) draw_sprite(ship.bullet.sprite, bullets[i])
             draw_sprite(ship.sprite, ship)
             draw_score()
@@ -271,7 +327,7 @@
             new_rock = create_enemy_entity(2)
             rocks.push(new_rock)
         }
-        function create_small_alien() {
+        function create_small_alien_ship() {
             new_alien = new AlienShip(small_alien_ship_sprite)
             entity = create_enemy_entity(2)
             new_alien.x = entity.x
@@ -287,8 +343,9 @@
             bullet_cooldown = 200
             rocks = []
             alien_ships = []
+            aliens = []
             for (i = 0; i < rock_count; i++) create_rock()
-            create_small_alien()
+            create_small_alien_ship()
         }
         function go_home() {
             clearTimeout(game_step_interval)
