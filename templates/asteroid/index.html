@@ -48,7 +48,7 @@
         bullet_lightning = new Bullet('lightning', 0.1, 10)
 
         active_bullet = bullet_lightning
-        background_image_key = 'background_pickaxe'
+        background_image_key = 'background_space'
         rock_image_key = 'rock'
         ship_image_key_coasting = 'ship2'
         ship_image_key_accelerating = 'ship2_flame'
@@ -79,7 +79,7 @@
             context.restore()
         }
         function clear_viewport() {
-            draw_image(background_image_key, background, 2)
+            draw_image(background_image_key, background, 1.21)
         }
         function move(x, dx, max_x) {
             x += dx
@@ -261,9 +261,9 @@
             images['saw'].src = "{% static 'asteroid/saw.gif' %}"
             images['lightning'] = new Image()
             images['lightning'].src = "{% static 'asteroid/lightning.gif' %}"
-            images['background_pickaxe'] = new Image()
-            images['background_pickaxe'].src = "{% static 'asteroid/background-pickaxe.jpg' %}"
-            images['background_pickaxe'].onload = go_home
+            images['background_space'] = new Image()
+            images['background_space'].src = "{% static 'asteroid/background_space.jpg' %}"
+            images['background_space'].onload = go_home
 
             document.addEventListener('keyup', (event) => {
                 if (event.code === "ArrowUp") {
