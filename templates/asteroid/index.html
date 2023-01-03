@@ -7,6 +7,12 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        function move_1dim(x, dx, max_x) {
+            x += dx
+            if (x < 0) return max_x - 1
+            if (x >= max_x) return 0
+            return x
+        }
         class Sprite {
             constructor(image_key, scale) {
                 this.image_key = image_key
@@ -49,6 +55,11 @@
                 var coeff = desired_speed / current_speed
                 this.dx *= coeff
                 this.dy *= coeff
+            }
+            move() {
+                this.x = move_1dim(this.x, this.dx, viewport_width)
+                this.y = move_1dim(this.y, this.dy, viewport_height)
+                if (this.ttl) this.ttl -= 1
             }
         }
         class Ship extends Entity {
@@ -184,20 +195,6 @@
         function clear_viewport() {
             draw_sprite(background_sprite, background)
         }
-        function move(x, dx, max_x) {
-            x += dx
-            if (x < 0) return max_x - 1
-            if (x >= max_x) return 0
-            return x
-        }
-        function move_entity(entity) {
-            entity.x = move(entity.x, entity.dx, viewport_width)
-            entity.y = move(entity.y, entity.dy, viewport_height)
-            if (entity.ttl !== null) {
-                entity.ttl -= 1
-            }
-            return entity
-        }
         function compute_wrapped_distance(entity1, entity2) {
             dx = wrapped_distance(entity1.x, entity2.x, viewport_width)
             dy = wrapped_distance(entity1.y, entity2.y, viewport_height)
@@ -209,13 +206,13 @@
         function game_step() {
             if (game_state != RUNNING) return
             // Move
-            for (i = 0; i < rocks.length; i++) rocks[i] = move_entity(rocks[i])
-            for (i = 0; i < alien_ships.length; i++) alien_ships[i] = move_entity(alien_ships[i])
-            for (i = 0; i < aliens.length; i++) aliens[i] = move_entity(aliens[i])
-            for (i = 0; i < bullets.length; i++) bullets[i] = move_entity(bullets[i])
+            for (i = 0; i < rocks.length; i++) rocks[i].move()
+            for (i = 0; i < alien_ships.length; i++) alien_ships[i].move()
+            for (i = 0; i < aliens.length; i++) aliens[i].move()
+            for (i = 0; i < bullets.length; i++) bullets[i].move()
             if (bullets.length > 0 && bullets[0].ttl <= 0) bullets.shift()
             if (aliens.length > 0 && aliens[0].ttl <= 0) aliens.shift()
-            move_entity(ship)
+            ship.move()
 
             // Handle collisions
             for (i = 0; i < rocks.length; i++) {
