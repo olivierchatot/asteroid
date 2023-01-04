@@ -364,8 +364,8 @@
             }
             new_alien = new AlienShip(x, y, small_alien_ship_sprite)
             new_alien.approaching = true
-            new_alien.dx = -new_alien.x + viewport_width / 2
-            new_alien.dy = -new_alien.y + viewport_height / 2
+            new_alien.dx = -new_alien.x + viewport_width / 2 + Math.random() * viewport_width / 2 - viewport_width / 4
+            new_alien.dy = -new_alien.y + viewport_height / 2 + Math.random() * viewport_height / 2 - viewport_height / 4
             new_alien.set_speed(2)
             alien_ships.push(new_alien)
         }
@@ -444,7 +444,6 @@
             ship.dy += 2 * Math.sin(ship.r / 180 * 3.1415)
             max_speed = 10
             if (ship.speed() > max_speed) {
-                console.log('Capping speed', ship.dx)
                 ship.set_speed(max_speed)
             }
             acceleration_timeout = setTimeout(acceleration, 200)
