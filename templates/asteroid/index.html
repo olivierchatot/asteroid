@@ -33,6 +33,7 @@
                 this.dx = dx
                 this.dy = dy
                 this.ttl = null
+                this.approaching = false
             }
             place_at(x, y, r) {
                 this.x = x
@@ -57,8 +58,14 @@
                 this.dy *= coeff
             }
             move() {
-                this.x = move_1dim(this.x, this.dx, viewport_width)
-                this.y = move_1dim(this.y, this.dy, viewport_height)
+                if (this.approaching) {
+                    this.x += this.dx
+                    this.y += this.dy
+                    if (this.x > mirror_image_threshold && this.x < viewport_width - mirror_image_threshold && this.y > mirror_image_threshold && this.y < viewport_height - mirror_image_threshold) this.approaching = false
+                } else {
+                    this.x = move_1dim(this.x, this.dx, viewport_width)
+                    this.y = move_1dim(this.y, this.dy, viewport_height)
+                }
                 if (this.ttl) this.ttl -= 1
             }
         }
@@ -85,8 +92,8 @@
             }
         }
         class Rock extends Entity {
-            constructor(position_entity) {
-                super(position_entity.x, position_entity.y, Math.random() * 360, 0, 0)
+            constructor(x, y) {
+                super(x, y, Math.random() * 360, 0, 0)
                 this.dr = 2 * Math.random() - 1
             }
             move() {
@@ -95,8 +102,8 @@
             }
         }
         class AlienShip extends Entity {
-            constructor(position_entity, sprite) {
-                super(position_entity.x, position_entity.y, position_entity.r, 0, 0)
+            constructor(x, y, sprite) {
+                super(x, y, 0, 0, 0)
                 this.sprite = sprite
                 this.reset_time_to_shoot()
                 this.dr = 0.5
@@ -105,6 +112,7 @@
                 this.time_to_shoot = Math.round(Math.random() * 50) + 50
             }
             maybe_create_child() {
+                if (this.approaching) return
                 if (this.time_to_shoot > 0) {
                     this.time_to_shoot -= 1
                     return
@@ -124,8 +132,8 @@
             constructor(parent, sprite){
                 super(parent.x, parent.y, 0, ship.x - parent.x, ship.y - parent.y)
                 this.sprite = sprite
-                this.ttl = viewport_height / 3
-                this.set_speed(3)
+                this.ttl = viewport_width
+                this.set_speed(4)
             }
         }
         function wrapped_distance(a, b, width) {
@@ -148,6 +156,7 @@
         score = 0
         enemy_round = 0
         highest_score = 0
+        mirror_image_threshold = 15
 
         bullet_laser = new Bullet(new Sprite('laser', 0.05), 20)
         bullet_saw = new Bullet(new Sprite('saw', 0.15), 10)
@@ -177,25 +186,24 @@
             context.drawImage(image, 0, 0);
             context.restore()
 
-            if (draw_mirror_entities === 1) {
-                edge_threshold = 15
+            if (draw_mirror_entities === 1 && !entity.approaching) {
                 mirror_entity = new Entity(entity.x, entity.y, entity.r, 0, 0)
-                if (entity.x < edge_threshold) {
+                if (entity.x < mirror_image_threshold) {
                     mirror_entity.x += viewport_width
                     draw_sprite(sprite, mirror_entity, 0)
                     mirror_entity.x = entity.x
                 }
-                else if(entity.x >= viewport_width - edge_threshold) {
+                else if(entity.x >= viewport_width - mirror_image_threshold) {
                     mirror_entity.x -= viewport_width
                     draw_sprite(sprite, mirror_entity, 0)
                     mirror_entity.x = entity.x
                 }
-                if (entity.y < edge_threshold) {
+                if (entity.y < mirror_image_threshold) {
                     mirror_entity.y += viewport_height
                     draw_sprite(sprite, mirror_entity, 0)
                     mirror_entity.y = entity.y
                 }
-                else if(entity.y >= viewport_height - edge_threshold) {
+                else if(entity.y >= viewport_height - mirror_image_threshold) {
                     mirror_entity.y -= viewport_height
                     draw_sprite(sprite, mirror_entity, 0)
                     mirror_entity.y = entity.y
@@ -332,22 +340,32 @@
             new_bullet.ttl = time_to_live
             bullets.push(new_bullet)
         }
-        function create_enemy_entity() {
+        function create_rock() {
             attempt_count = 0
             while (attempt_count < 20) {
                 attempt_count += 1
-                new_entity = new Entity(Math.random() * viewport_width, Math.random() * viewport_width, 0, 0, 0)
-                if (compute_wrapped_distance(new_entity, ship) > 80) break
+                new_rock = new Rock(Math.random() * viewport_width, Math.random() * viewport_width)
+                if (compute_wrapped_distance(new_rock, ship) > 80) break
             }
-            return new_entity
-        }
-        function create_rock() {
-            new_rock = new Rock(create_enemy_entity())
             new_rock.set_speed(2)
             rocks.push(new_rock)
         }
         function create_small_alien_ship() {
-            new_alien = new AlienShip(create_enemy_entity(), small_alien_ship_sprite)
+            off_screen_distance = 200
+            if (Math.random() < 0.5) {
+                x = Math.random() * viewport_width
+                if (Math.random() < 0.5) y = -off_screen_distance
+                else y = viewport_height + off_screen_distance
+
+            } else {
+                y = Math.random() * viewport_height
+                if (Math.random() < 0.5) x = -off_screen_distance
+                else x = viewport_width + off_screen_distance
+            }
+            new_alien = new AlienShip(x, y, small_alien_ship_sprite)
+            new_alien.approaching = true
+            new_alien.dx = -new_alien.x + viewport_width / 2
+            new_alien.dy = -new_alien.y + viewport_height / 2
             new_alien.set_speed(2)
             alien_ships.push(new_alien)
         }
