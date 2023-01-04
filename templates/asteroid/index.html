@@ -440,17 +440,14 @@
         function acceleration(bootstrap = 0) {
             if (bootstrap == 1 && acceleration_timeout != 0) return
             ship.set_accelerating()
-            old_dx = ship.dx
-            old_dy = ship.dy
             ship.dx += 2 * Math.cos(ship.r / 180 * 3.1415)
             ship.dy += 2 * Math.sin(ship.r / 180 * 3.1415)
             max_speed = 10
             if (ship.speed() > max_speed) {
-                ship.dx = old_dx
-                ship.dy = old_dy
-            } else {
-                acceleration_timeout = setTimeout(acceleration, 200)
+                console.log('Capping speed', ship.dx)
+                ship.set_speed(max_speed)
             }
+            acceleration_timeout = setTimeout(acceleration, 200)
         }
         function slowdown(bootstrap = 0) {
             if (bootstrap == 1 && slowdown_timeout != 0) return
@@ -460,9 +457,8 @@
             if (ship.speed() < 0.5) {
                 ship.dx = 0
                 ship.dy = 0
-            } else {
-                slowdown_timeout = setTimeout(slowdown, 200)
             }
+            slowdown_timeout = setTimeout(slowdown, 200)
         }
         function left_rotation(bootstrap = 0) {
             if (bootstrap == 1 && left_rotation_timeout != 0) return
