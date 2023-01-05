@@ -25,6 +25,7 @@
                     }
                 }
                 this.radius = Math.min(image.width, image.height) * this.scale / 2
+                this.center = [0, 0]
             }
         }
         class Bullet {
@@ -245,7 +246,7 @@
             context.scale(sprite.scale, sprite.scale)
             context.translate(entity.x / sprite.scale, entity.y / sprite.scale)
             context.rotate(entity.r * 3.1415 / 180)
-            context.translate(-image.width / 2, -image.height / 2)
+            context.translate(-image.width / 2 - sprite.center[0] / sprite.scale, -image.height / 2 - sprite.center[1] / sprite.scale)
             context.drawImage(image, 0, 0);
             context.restore()
 
@@ -460,8 +461,8 @@
             context.fillText("Press space to play", 100, 200);
             context.font = "30px Arial";
             if (score > 0) context.fillText("You scored " + score + " !", 100, 270);
-            ship_zeke.place_at(150, 400, 0)
-            ship_zach.place_at(150, 550, 0)
+            ship_zeke.place_at(170, 400, 0)
+            ship_zach.place_at(170, 550, 0)
             draw_sprite(ship_zeke.sprite, ship_zeke)
             draw_sprite(ship_zach.sprite, ship_zach)
             context.font = "20px Arial";
@@ -549,6 +550,10 @@
                 large_alien_sprite = new Sprite('large_alien', 30)
                 ship_zeke = new Ship(0, 6, 'ship1', 'ship1_flame', 0, 120, bullet_saw)
                 ship_zach = new Ship(1, 4, 'ship2', 'ship2_flame', 'ship2_break', 150, bullet_lightning)
+                ship_zeke.sprite.center[0] = 20
+                ship_zach.sprite.center[0] = 15
+                ship_zeke.sprite.radius = 40
+                ship_zach.sprite.radius = 40
                 ship = ship_zeke
 
                 background = new Entity(background_sprite, viewport_width / 2, viewport_height / 2, 0, 0, 0)
@@ -609,6 +614,9 @@
             })
 
             document.addEventListener('keydown', (event) => {
+                if (event.code === "KeyR") {
+                    draw_radii = true
+                }
                 if (game_state == HOME) {
                     if (event.code === "Space") {
                         console.log('Starting game')
@@ -637,9 +645,6 @@
                         create_bullet()
                         last_bullet_time = now
                     }
-                }
-                else if (event.code === "KeyR") {
-                    draw_radii = true
                 }
             });
         })
