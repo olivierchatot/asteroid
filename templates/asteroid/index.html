@@ -35,12 +35,29 @@
                 this.ttl = null
                 this.approaching = false
             }
-            place_at(x, y, r) {
+            place_at(x, y, r = 0, dx = 0, dy = 0) {
                 this.x = x
                 this.y = y
                 this.r = r
-                this.dx = 0
-                this.dy = 0
+                this.dx = dx
+                this.dy = dy
+            }
+            move_offscreen(speed) {
+                var off_screen_distance = 200
+                if (Math.random() < 0.5) {
+                    this.x = Math.random() * viewport_width
+                    if (Math.random() < 0.5) this.y = -off_screen_distance
+                    else this.y = viewport_height + off_screen_distance
+
+                } else {
+                    this.y = Math.random() * viewport_height
+                    if (Math.random() < 0.5) this.x = -off_screen_distance
+                    else this.x = viewport_width + off_screen_distance
+                }
+                this.dx = -new_alien.x + viewport_width / 2 + Math.random() * viewport_width / 2 - viewport_width / 4
+                this.dy = -new_alien.y + viewport_height / 2 + Math.random() * viewport_height / 2 - viewport_height / 4
+                this.set_speed(speed)
+                this.approaching = true
             }
             speed() {
                 return Math.sqrt(this.dx * this.dx + this.dy * this.dy)
@@ -67,6 +84,22 @@
                     this.y = move_1dim(this.y, this.dy, viewport_height)
                 }
                 if (this.ttl) this.ttl -= 1
+            }
+            ticks_to_collision(other, min_ticks, max_ticks) {
+                var future_this = new Entity(this.x, this.y, 0, this.dx, this.dy)
+                var future_other = new Entity(other.x, other.y, 0, other.dx, other.dy)
+                for (var t = 0; t < min_ticks; t++) {
+                    future_this.move()
+                    future_other.move()
+                }
+                for (var t = min_ticks; t < max_ticks; t++) {
+                    if (collided(future_this, future_other)) {
+                        return t
+                    }
+                    future_this.move()
+                    future_other.move()
+                }
+                return false
             }
         }
         class Ship extends Entity {
@@ -101,10 +134,10 @@
                 this.r += this.dr
             }
         }
-        class AlienShip extends Entity {
-            constructor(x, y, sprite) {
-                super(x, y, 0, 0, 0)
-                this.sprite = sprite
+        class SmallAlienShip extends Entity {
+            constructor() {
+                super(0, 0, 0, 0, 0)
+                this.sprite = small_alien_ship_sprite
                 this.reset_time_to_shoot()
                 this.dr = 0.5
             }
@@ -118,7 +151,10 @@
                     return
                 }
                 this.reset_time_to_shoot()
-                aliens.push(new Alien(this, small_alien_sprite))
+                this.create_child()
+            }
+            create_child() {
+                aliens.push(new Alien(this, ship, small_alien_sprite))
             }
             move() {
                 super.move()
@@ -128,11 +164,45 @@
                 }
             }
         }
+        class LargeAlienShip extends SmallAlienShip {
+            constructor() {
+                super(0, 0, 0, 0, 0)
+                this.sprite = large_alien_ship_sprite
+                this.dr = 0.2
+                this.handled_bullets = []
+            }
+            maybe_create_child() {
+                for (var i = 0; i < bullets.length; i++) {
+                    var bullet_handled = false
+                    for (var k = 0; k < this.handled_bullets.length; k++) {
+                        if (this.handled_bullets[k] === bullets[i]) {
+                            bullet_handled = true
+                            break
+                        }
+                    }
+                    if (bullet_handled) continue
+                    var ticks_to_col = this.ticks_to_collision(bullets[i], 10, 30)
+                    if (ticks_to_col) {
+                        var future_bullet = new Entity(bullets[i].x, bullets[i].y, 0, bullets[i].dx, bullets[i].dy)
+                        for (var t = 0; t < ticks_to_col / 2; t++) future_bullet.move()
+                        new_alien = new Alien(this, future_bullet, large_alien_sprite)
+                        new_alien.set_speed(bullets[i].speed())
+                        aliens.push(new_alien)
+                        this.handled_bullets.push(bullets[i])
+                        break
+                    }
+                }
+
+                super.maybe_create_child()
+            }
+
+            create_child() {}
+        }
         class Alien extends Entity {
-            constructor(parent, sprite){
-                super(parent.x, parent.y, 0, ship.x - parent.x, ship.y - parent.y)
+            constructor(parent, target, sprite){
+                super(parent.x, parent.y, 0, target.x - parent.x, target.y - parent.y)
                 this.sprite = sprite
-                this.ttl = viewport_width
+                this.ttl = viewport_width / 4
                 this.set_speed(4)
             }
         }
@@ -166,6 +236,8 @@
         rock_sprite = new Sprite('rock', 0.05)
         small_alien_ship_sprite = new Sprite('small_alien_ship', 0.1)
         small_alien_sprite = new Sprite('small_alien', 0.05)
+        large_alien_ship_sprite = new Sprite('large_alien_ship', 0.2)
+        large_alien_sprite = new Sprite('large_alien', 0.1)
         ship_zeke = new Ship(0, 6, 'ship1', 'ship1_flame', 0, 0.15, bullet_saw)
         ship_zach = new Ship(1, 4, 'ship2', 'ship2_flame', 'ship2_break', 0.15, bullet_lightning)
         ship = ship_zeke
@@ -305,6 +377,7 @@
                 if (enemy_round >= 6) small_alien_count += 1
                 for (i = 0; i < rock_count; i++) create_rock()
                 for (i = 0; i < small_alien_count; i++) create_small_alien_ship()
+                create_large_alien_ship()
                 enemy_round += 1
             }
             for (i = 0; i < alien_ships.length; i++) alien_ships[i].maybe_create_child()
@@ -351,22 +424,13 @@
             rocks.push(new_rock)
         }
         function create_small_alien_ship() {
-            off_screen_distance = 200
-            if (Math.random() < 0.5) {
-                x = Math.random() * viewport_width
-                if (Math.random() < 0.5) y = -off_screen_distance
-                else y = viewport_height + off_screen_distance
-
-            } else {
-                y = Math.random() * viewport_height
-                if (Math.random() < 0.5) x = -off_screen_distance
-                else x = viewport_width + off_screen_distance
-            }
-            new_alien = new AlienShip(x, y, small_alien_ship_sprite)
-            new_alien.approaching = true
-            new_alien.dx = -new_alien.x + viewport_width / 2 + Math.random() * viewport_width / 2 - viewport_width / 4
-            new_alien.dy = -new_alien.y + viewport_height / 2 + Math.random() * viewport_height / 2 - viewport_height / 4
-            new_alien.set_speed(2)
+            new_alien = new SmallAlienShip()
+            new_alien.move_offscreen(2)
+            alien_ships.push(new_alien)
+        }
+        function create_large_alien_ship() {
+            new_alien = new LargeAlienShip()
+            new_alien.move_offscreen(4)
             alien_ships.push(new_alien)
         }
         function reset_ship() {
@@ -474,7 +538,6 @@
             context = canvas.getContext('2d')
 
             image_sources = {}
-            image_sources['arrow'] = "{% static 'asteroid/arrow.png' %}"
             image_sources['ship1'] = "{% static 'asteroid/ship1.gif' %}"
             image_sources['ship1_flame'] = "{% static 'asteroid/ship1_flame.gif' %}"
             image_sources['ship2'] = "{% static 'asteroid/ship2.gif' %}"
@@ -486,6 +549,8 @@
             image_sources['background_space'] = "{% static 'asteroid/background_space.jpg' %}"
             image_sources['small_alien_ship'] = "{% static 'asteroid/small_alien_ship.gif' %}"
             image_sources['small_alien'] = "{% static 'asteroid/small_alien.gif' %}"
+            image_sources['large_alien_ship'] = "{% static 'asteroid/large_alien_ship.gif' %}"
+            image_sources['large_alien'] = "{% static 'asteroid/large_alien.gif' %}"
 
             images = {}
             for (key in image_sources) {
