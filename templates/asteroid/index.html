@@ -16,10 +16,10 @@
         class Sprite {
             constructor(image_key, width_on_viewport, viewport_height = undefined) {
                 this.image_key = image_key
-                this.scale = width_on_viewport / images[image_key].width
-
+                let image = images[image_key]
+                this.scale = width_on_viewport / image.width
                 if (viewport_height) {
-                    var scale_h = viewport_height / images[image_key].height
+                    var scale_h = viewport_height / image.height
                     if (this.scale < scale_h) {
                         this.scale = scale_h
                     }
@@ -33,7 +33,8 @@
             }
         }
         class Entity {
-            constructor(x, y, r, dx, dy) {
+            constructor(sprite, x, y, r, dx, dy) {
+                this.sprite = sprite
                 this.x = x
                 this.y = y
                 this.r = r
@@ -93,8 +94,8 @@
                 if (this.ttl) this.ttl -= 1
             }
             ticks_to_collision(other, min_ticks, max_ticks) {
-                var future_this = new Entity(this.x, this.y, 0, this.dx, this.dy)
-                var future_other = new Entity(other.x, other.y, 0, other.dx, other.dy)
+                var future_this = new Entity(this.sprite, this.x, this.y, 0, this.dx, this.dy)
+                var future_other = new Entity(other.sprite, other.x, other.y, 0, other.dx, other.dy)
                 for (var t = 0; t < min_ticks; t++) {
                     future_this.move()
                     future_other.move()
@@ -111,14 +112,13 @@
         }
         class Ship extends Entity {
             constructor(slowdown_enabled, rotation_rate, image_key_coasting, image_key_accelerating, image_key_breaking, width_on_viewport, bullet) {
-                super(0, 0, 0, 0, 0)
+                super(new Sprite(image_key_coasting, width_on_viewport), 0, 0, 0, 0, 0)
                 this.slowdown_enabled = slowdown_enabled
                 this.rotation_rate = rotation_rate
                 this.image_key_coasting = image_key_coasting
                 this.image_key_accelerating = image_key_accelerating
                 this.image_key_breaking = image_key_breaking
                 this.bullet = bullet
-                this.sprite = new Sprite(image_key_coasting, width_on_viewport)
             }
             set_accelerating() {
                 this.sprite.image_key = this.image_key_accelerating
@@ -133,7 +133,7 @@
         }
         class Rock extends Entity {
             constructor(x, y) {
-                super(x, y, Math.random() * 360, 0, 0)
+                super(rock_sprite, x, y, Math.random() * 360, 0, 0)
                 this.dr = 2 * Math.random() - 1
             }
             move() {
@@ -143,8 +143,7 @@
         }
         class SmallAlienShip extends Entity {
             constructor() {
-                super(0, 0, 0, 0, 0)
-                this.sprite = small_alien_ship_sprite
+                super(small_alien_ship_sprite, 0, 0, 0, 0, 0)
                 this.reset_time_to_shoot()
                 this.dr = 0.5
             }
@@ -173,8 +172,7 @@
         }
         class LargeAlienShip extends SmallAlienShip {
             constructor() {
-                super(0, 0, 0, 0, 0)
-                this.sprite = large_alien_ship_sprite
+                super(large_alien_ship_sprite, 0, 0, 0, 0, 0)
                 this.dr = 0.2
                 this.handled_bullets = []
             }
@@ -207,8 +205,7 @@
         }
         class Alien extends Entity {
             constructor(parent, target, sprite){
-                super(parent.x, parent.y, 0, target.x - parent.x, target.y - parent.y)
-                this.sprite = sprite
+                super(sprite, parent.x, parent.y, 0, target.x - parent.x, target.y - parent.y)
                 this.ttl = viewport_width / 4
                 this.set_speed(4)
             }
@@ -238,7 +235,7 @@
         function draw_sprite(sprite, entity, draw_mirror_entities = 1) {
             image = images[sprite.image_key]
             if (image === undefined) {
-                console.log('Undefined image', image_key)
+                console.log('Undefined image', sprite.image_key)
                 return
             }
             context.save()
@@ -250,7 +247,7 @@
             context.restore()
 
             if (draw_mirror_entities === 1 && !entity.approaching) {
-                mirror_entity = new Entity(entity.x, entity.y, entity.r, 0, 0)
+                mirror_entity = new Entity(sprite, entity.x, entity.y, entity.r, 0, 0)
                 if (entity.x < mirror_image_threshold) {
                     mirror_entity.x += viewport_width
                     draw_sprite(sprite, mirror_entity, 0)
@@ -376,10 +373,10 @@
 
             // Draw
             clear_viewport()
-            for (i = 0; i < rocks.length; i++) draw_sprite(rock_sprite, rocks[i])
+            for (i = 0; i < rocks.length; i++) draw_sprite(rocks[i].sprite, rocks[i])
             for (i = 0; i < alien_ships.length; i++) draw_sprite(alien_ships[i].sprite, alien_ships[i])
             for (i = 0; i < aliens.length; i++) draw_sprite(aliens[i].sprite, aliens[i])
-            for (i = 0; i < bullets.length; i++) draw_sprite(ship.bullet.sprite, bullets[i])
+            for (i = 0; i < bullets.length; i++) draw_sprite(bullets[i].sprite, bullets[i])
             draw_sprite(ship.sprite, ship)
             draw_score()
         }
@@ -401,7 +398,7 @@
             x = ship.x + 25 * Math.cos(ship.r / 180 * 3.1415)
             y = ship.y + 25 * Math.sin(ship.r / 180 * 3.1415)
             time_to_live = viewport_height / ship.bullet.speed
-            new_bullet = new Entity(x, y, ship.r, dx, dy)
+            new_bullet = new Entity(ship.bullet.sprite, x, y, ship.r, dx, dy)
             new_bullet.ttl = time_to_live
             bullets.push(new_bullet)
         }
@@ -541,7 +538,7 @@
                 ship_zach = new Ship(1, 4, 'ship2', 'ship2_flame', 'ship2_break', 150, bullet_lightning)
                 ship = ship_zeke
 
-                background = new Entity(viewport_width / 2, viewport_height / 2, 0, 0, 0)
+                background = new Entity(background_sprite, viewport_width / 2, viewport_height / 2, 0, 0, 0)
 
                 go_home()
             }
