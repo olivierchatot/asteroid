@@ -533,6 +533,13 @@
             ship.r += ship.rotation_rate
             right_rotation_timeout = setTimeout(right_rotation, 25)
         }
+        function image_loaded() {
+            loaded_image_count += 1
+            console.log(loaded_image_count)
+            console.log(image_sources)
+            console.log(image_sources.length)
+            if (loaded_image_count == Object.keys(image_sources).length) go_home()
+        }
         $(function() {
             var canvas = document.getElementById('viewport')
             context = canvas.getContext('2d')
@@ -553,11 +560,12 @@
             image_sources['large_alien'] = "{% static 'asteroid/large_alien.gif' %}"
 
             images = {}
+            loaded_image_count = 0
             for (key in image_sources) {
                 images[key] = new Image()
+                images[key].onload = image_loaded
                 images[key].src = image_sources[key]
             }
-            images['background_space'].onload = go_home
 
             document.addEventListener('keyup', (event) => {
                 if (game_state == HOME) return
