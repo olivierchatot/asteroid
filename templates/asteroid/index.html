@@ -233,6 +233,7 @@
         enemy_round = 0
         highest_score = 0
         mirror_image_threshold = 15
+        draw_radii = false
 
         function draw_sprite(sprite, entity, draw_mirror_entities = 1) {
             image = images[sprite.image_key]
@@ -247,6 +248,13 @@
             context.translate(-image.width / 2, -image.height / 2)
             context.drawImage(image, 0, 0);
             context.restore()
+
+            if (draw_radii) {
+                context.beginPath();
+                context.strokeStyle = 'red'
+                context.arc(entity.x, entity.y, sprite.radius, 0, 2 * Math.PI);
+                context.stroke();
+            }
 
             if (draw_mirror_entities === 1 && !entity.approaching) {
                 mirror_entity = new Entity(sprite, entity.x, entity.y, entity.r, 0, 0)
@@ -271,6 +279,7 @@
                     mirror_entity.y = entity.y
                 }
             }
+
         }
         function draw_score() {
             context.save()
@@ -525,8 +534,12 @@
         function image_loaded() {
             loaded_image_count += 1
             if (loaded_image_count == Object.keys(image_sources).length) {
-                bullet_saw = new Bullet(new Sprite('saw', 40), 10)
-                bullet_lightning = new Bullet(new Sprite('lightning', 40), 10)
+                saw_sprite = new Sprite('saw', 40)
+                saw_sprite.radius = 20
+                lightning_sprite = new Sprite('lightning', 40)
+                lightning_sprite.radius = 20
+                bullet_saw = new Bullet(saw_sprite, 10)
+                bullet_lightning = new Bullet(lightning_sprite, 10)
 
                 background_sprite = new Sprite('background_space', viewport_width, viewport_height)
                 rock_sprite = new Sprite('rock', 40)
@@ -571,6 +584,9 @@
             }
 
             document.addEventListener('keyup', (event) => {
+                if (event.code === "KeyR") {
+                    draw_radii = false
+                }
                 if (game_state == HOME) return
                 if (event.code === "ArrowUp") {
                     clearTimeout(acceleration_timeout)
@@ -621,6 +637,9 @@
                         create_bullet()
                         last_bullet_time = now
                     }
+                }
+                else if (event.code === "KeyR") {
+                    draw_radii = true
                 }
             });
         })
