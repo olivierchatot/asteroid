@@ -142,9 +142,9 @@
                 this.r += this.dr
             }
         }
-        class SmallAlienShip extends Entity {
-            constructor() {
-                super(small_alien_ship_sprite, 0, 0, 0, 0, 0)
+        class AlienShip extends Entity {
+            constructor(sprite) {
+                super(sprite, 0, 0, 0, 0, 0)
                 this.reset_time_to_shoot()
                 this.dr = 0.5
             }
@@ -160,9 +160,6 @@
                 this.reset_time_to_shoot()
                 this.create_child()
             }
-            create_child() {
-                aliens.push(new Alien(this, ship, small_alien_sprite))
-            }
             move() {
                 super.move()
                 this.r += this.dr
@@ -171,10 +168,17 @@
                 }
             }
         }
-        class LargeAlienShip extends SmallAlienShip {
+        class SmallAlienShip extends AlienShip {
             constructor() {
-                super(large_alien_ship_sprite, 0, 0, 0, 0, 0)
-                this.dr = 0.2
+                super(small_alien_ship_sprite)
+            }
+            create_child() {
+                aliens.push(new Alien(this, ship, small_alien_sprite, 4))
+            }
+        }
+        class LargeAlienShip extends AlienShip {
+            constructor() {
+                super(large_alien_ship_sprite)
                 this.handled_bullets = []
             }
             maybe_create_child() {
@@ -189,26 +193,23 @@
                     if (bullet_handled) continue
                     var ticks_to_col = this.ticks_to_collision(bullets[i], 10, 30)
                     if (ticks_to_col) {
-                        var future_bullet = new Entity(bullets[i].x, bullets[i].y, 0, bullets[i].dx, bullets[i].dy)
+                        var future_bullet = new Entity(ship.bullet.sprite, bullets[i].x, bullets[i].y, 0, bullets[i].dx, bullets[i].dy)
                         for (var t = 0; t < ticks_to_col / 2; t++) future_bullet.move()
-                        new_alien = new Alien(this, future_bullet, large_alien_sprite)
-                        new_alien.set_speed(bullets[i].speed())
+                        new_alien = new Alien(this, future_bullet, large_alien_sprite, bullets[i].speed())
                         aliens.push(new_alien)
                         this.handled_bullets.push(bullets[i])
                         break
                     }
                 }
-
                 super.maybe_create_child()
             }
-
             create_child() {}
         }
         class Alien extends Entity {
-            constructor(parent, target, sprite){
+            constructor(parent, target, sprite, speed){
                 super(sprite, parent.x, parent.y, 0, target.x - parent.x, target.y - parent.y)
-                this.ttl = viewport_width / 4
-                this.set_speed(4)
+                this.ttl = viewport_width / speed
+                this.set_speed(speed)
             }
         }
         function wrapped_distance(a, b, width) {
@@ -366,8 +367,6 @@
                 if (enemy_round >= 6) small_alien_count += 1
                 for (i = 0; i < rock_count; i++) create_rock()
                 for (i = 0; i < small_alien_count; i++) create_small_alien_ship()
-                create_small_alien_ship()
-                create_large_alien_ship()
                 enemy_round += 1
             }
             for (i = 0; i < alien_ships.length; i++) alien_ships[i].maybe_create_child()
@@ -594,7 +593,6 @@
             })
 
             document.addEventListener('keydown', (event) => {
-                console.log(event.code)
                 if (game_state == HOME) {
                     if (event.code === "Space") {
                         console.log('Starting game')
