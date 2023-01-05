@@ -14,9 +14,16 @@
             return x
         }
         class Sprite {
-            constructor(image_key, scale) {
+            constructor(image_key, width_on_viewport, viewport_height = undefined) {
                 this.image_key = image_key
-                this.scale = scale
+                this.scale = width_on_viewport / images[image_key].width
+
+                if (viewport_height) {
+                    var scale_h = viewport_height / images[image_key].height
+                    if (this.scale < scale_h) {
+                        this.scale = scale_h
+                    }
+                }
             }
         }
         class Bullet {
@@ -103,7 +110,7 @@
             }
         }
         class Ship extends Entity {
-            constructor(slowdown_enabled, rotation_rate, image_key_coasting, image_key_accelerating, image_key_breaking, scale, bullet) {
+            constructor(slowdown_enabled, rotation_rate, image_key_coasting, image_key_accelerating, image_key_breaking, width_on_viewport, bullet) {
                 super(0, 0, 0, 0, 0)
                 this.slowdown_enabled = slowdown_enabled
                 this.rotation_rate = rotation_rate
@@ -111,7 +118,7 @@
                 this.image_key_accelerating = image_key_accelerating
                 this.image_key_breaking = image_key_breaking
                 this.bullet = bullet
-                this.sprite = new Sprite(image_key_coasting, scale)
+                this.sprite = new Sprite(image_key_coasting, width_on_viewport)
             }
             set_accelerating() {
                 this.sprite.image_key = this.image_key_accelerating
@@ -227,22 +234,6 @@
         enemy_round = 0
         highest_score = 0
         mirror_image_threshold = 15
-
-        bullet_laser = new Bullet(new Sprite('laser', 0.05), 20)
-        bullet_saw = new Bullet(new Sprite('saw', 0.15), 10)
-        bullet_lightning = new Bullet(new Sprite('lightning', 0.1), 10)
-
-        background_sprite = new Sprite('background_space', 1.21)
-        rock_sprite = new Sprite('rock', 0.05)
-        small_alien_ship_sprite = new Sprite('small_alien_ship', 0.1)
-        small_alien_sprite = new Sprite('small_alien', 0.05)
-        large_alien_ship_sprite = new Sprite('large_alien_ship', 0.2)
-        large_alien_sprite = new Sprite('large_alien', 0.1)
-        ship_zeke = new Ship(0, 6, 'ship1', 'ship1_flame', 0, 0.15, bullet_saw)
-        ship_zach = new Ship(1, 4, 'ship2', 'ship2_flame', 'ship2_break', 0.15, bullet_lightning)
-        ship = ship_zeke
-
-        background = new Entity(viewport_width / 2, viewport_height / 2, 0, 0, 0)
 
         function draw_sprite(sprite, entity, draw_mirror_entities = 1) {
             image = images[sprite.image_key]
@@ -377,6 +368,7 @@
                 if (enemy_round >= 6) small_alien_count += 1
                 for (i = 0; i < rock_count; i++) create_rock()
                 for (i = 0; i < small_alien_count; i++) create_small_alien_ship()
+                create_small_alien_ship()
                 create_large_alien_ship()
                 enemy_round += 1
             }
@@ -535,10 +527,24 @@
         }
         function image_loaded() {
             loaded_image_count += 1
-            console.log(loaded_image_count)
-            console.log(image_sources)
-            console.log(image_sources.length)
-            if (loaded_image_count == Object.keys(image_sources).length) go_home()
+            if (loaded_image_count == Object.keys(image_sources).length) {
+                bullet_saw = new Bullet(new Sprite('saw', 40), 10)
+                bullet_lightning = new Bullet(new Sprite('lightning', 40), 10)
+
+                background_sprite = new Sprite('background_space', viewport_width, viewport_height)
+                rock_sprite = new Sprite('rock', 40)
+                small_alien_ship_sprite = new Sprite('small_alien_ship', 100)
+                small_alien_sprite = new Sprite('small_alien', 30)
+                large_alien_ship_sprite = new Sprite('large_alien_ship', 200)
+                large_alien_sprite = new Sprite('large_alien', 30)
+                ship_zeke = new Ship(0, 6, 'ship1', 'ship1_flame', 0, 120, bullet_saw)
+                ship_zach = new Ship(1, 4, 'ship2', 'ship2_flame', 'ship2_break', 150, bullet_lightning)
+                ship = ship_zeke
+
+                background = new Entity(viewport_width / 2, viewport_height / 2, 0, 0, 0)
+
+                go_home()
+            }
         }
         $(function() {
             var canvas = document.getElementById('viewport')
