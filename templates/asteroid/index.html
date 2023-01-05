@@ -24,6 +24,7 @@
                         this.scale = scale_h
                     }
                 }
+                this.radius = Math.min(image.width, image.height) * this.scale / 2
             }
         }
         class Bullet {
@@ -287,7 +288,7 @@
             return Math.sqrt(dx * dx + dy * dy)
         }
         function collided(entity1, entity2) {
-            return compute_wrapped_distance(entity1, entity2) <= 25
+            return compute_wrapped_distance(entity1, entity2) <= entity1.sprite.radius + entity2.sprite.radius
         }
         function game_step() {
             if (game_state != RUNNING) return
