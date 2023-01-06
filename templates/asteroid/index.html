@@ -548,6 +548,7 @@
         function go_home() {
             clearTimeout(game_step_interval)
             game_state = HOME
+            ship.set_coasting()
 
             clear_viewport()
             context.save()
