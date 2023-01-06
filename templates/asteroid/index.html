@@ -413,6 +413,7 @@
                 }
             }
             for (i = 0; i < alien_ships.length; i++) {
+                if (alien_ships[i].approaching) continue
                 if (collided(alien_ships[i], ship)) {
                     console.log('Ship collided with alien ship')
                     handle_death()
