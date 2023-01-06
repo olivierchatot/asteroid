@@ -520,7 +520,7 @@
             new_alien.move_offscreen(2)
             alien_ships.push(new_alien)
         }
-        function create_large_alien_ship() {
+        function create_salien_ship() {
             new_alien = new LargeAlienShip()
             new_alien.move_offscreen(4)
             alien_ships.push(new_alien)
@@ -645,8 +645,8 @@
                 rock_sprite = new Sprite('rock', 40)
                 small_alien_ship_sprite = new Sprite('small_alien_ship', 100)
                 small_alien_sprite = new Sprite('small_alien', 30)
-                sniper_alien_ship_sprite = new Sprite('large_alien_ship', 100)
-                sniper_alien_sprite = new Sprite('large_alien', 30)
+                sniper_alien_ship_sprite = new Sprite('sniper_alien_ship', 100)
+                sniper_alien_sprite = new Sprite('sniper_alien', 30)
                 ship_zeke = new Ship(0, 6, 'ship1', 'ship1_flame', 0, 120, bullet_saw)
                 ship_zach = new Ship(1, 4, 'ship2', 'ship2_flame', 'ship2_break', 150, bullet_lightning)
                 ship_zeke.sprite.center[0] = 20
@@ -676,8 +676,8 @@
             image_sources['background_space'] = "{% static 'asteroid/background_space.jpg' %}"
             image_sources['small_alien_ship'] = "{% static 'asteroid/small_alien_ship.gif' %}"
             image_sources['small_alien'] = "{% static 'asteroid/small_alien.gif' %}"
-            image_sources['large_alien_ship'] = "{% static 'asteroid/large_alien_ship.gif' %}"
-            image_sources['large_alien'] = "{% static 'asteroid/large_alien.gif' %}"
+            image_sources['sniper_alien_ship'] = "{% static 'asteroid/sniper_alien_ship.gif' %}"
+            image_sources['sniper_alien'] = "{% static 'asteroid/sniper_alien.gif' %}"
 
             images = {}
             loaded_image_count = 0
