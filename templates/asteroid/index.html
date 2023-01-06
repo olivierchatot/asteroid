@@ -13,6 +13,44 @@
             if (x >= max_x) return 0
             return x
         }
+        class Vector {
+            constructor(x, y) {
+                this.x = x
+                this.y = y
+            }
+            copy() { return new Vector(this.x, this.y) }
+            angle() { return Math.atan2(this.y, this.x) }
+            inverse() { return new Vector(-this.x, -this.y) }
+            scale(coeff) {this.x *= coeff; this.y *= coeff; return this; }
+            norm() { return Math.sqrt(this.x * this.x + this.y * this.y) }
+            dot(other) { return this.x * other.x + this.y * other.y }
+            add_in(other) {
+                this.x += other.x
+                this.y += other.y
+                return this
+            }
+            angle_with(other) {
+                return Math.acos(this.dot(other) / (this.norm() * other.norm()))
+            }
+            // Returns positive if other is a positive rotation from this
+            signed_angle_with(other) {
+                let cross_z = this.x * other.y - this.y * other.x
+                if (cross_z < 0) return -this.angle_with(other)
+                return this.angle_with(other)
+            }
+            projection_norm(other) {
+                return this.dot(other) / other.norm()
+            }
+            static from_to(a, b) {
+                return new Vector(b.x - a.x, b.y - a.y)
+            }
+            static direction(theta, norm = 1) {
+                return new Vector(norm * Math.cos(theta), norm * Math.sin(theta))
+            }
+            static origin() {
+                return new Vector(0, 0)
+            }
+        }
         class Sprite {
             constructor(image_key, width_on_viewport, viewport_height = undefined) {
                 this.image_key = image_key
@@ -44,6 +82,12 @@
                 this.dy = dy
                 this.ttl = null
                 this.approaching = false
+            }
+            motion_vector() {
+                return new Vector(this.dx, this.dy)
+            }
+            position_vector() {
+                return new Vector(this.x, this.y)
             }
             place_at(x, y, r = 0, dx = 0, dy = 0) {
                 this.x = x
@@ -177,6 +221,30 @@
                 aliens.push(new Alien(this, ship, small_alien_sprite, 4))
             }
         }
+        class SniperAlienShip extends AlienShip {
+            constructor() {
+                super(sniper_alien_ship_sprite)
+                this.alien_speed = 6
+            }
+            create_child() {
+                let target_motion = ship.motion_vector()
+                let target_position = Vector.from_to(this, ship)
+                let target_speed_away = target_motion.projection_norm(target_position)
+                if (target_speed_away > this.alien_speed) return
+                if (target_speed_away == 0) {
+                    var alien_angle = target_position.angle()
+                } else {
+                    let signed_phi = target_position.inverse().signed_angle_with(target_motion)
+                    let sin_theta = ship.speed() / this.alien_speed * Math.sin(Math.abs(signed_phi))
+                    if (Math.abs(sin_theta) >= 1) return
+                    let theta = Math.asin(sin_theta)
+                    if (signed_phi > 0) var alien_angle = target_position.angle() - theta
+                    else var alien_angle = target_position.angle() + theta
+                }
+                let alien_motion = Vector.direction(alien_angle).add_in(this)
+                aliens.push(new Alien(this, alien_motion, sniper_alien_sprite, this.alien_speed))
+            }
+        }
         class LargeAlienShip extends AlienShip {
             constructor() {
                 super(large_alien_ship_sprite)
@@ -236,6 +304,20 @@
         mirror_image_threshold = 15
         draw_radii = false
 
+        function draw_vector(vector, center, draw_arrow = true) {
+            context.beginPath();
+            context.lineWidth = 1
+            context.strokeStyle = 'red'
+            context.moveTo(center.x, center.y)
+            context.lineTo(center.x + vector.x, center.y + vector.y)
+            context.stroke()
+            if (!draw_arrow) return
+            vector_end = vector.copy().add_in(center)
+            wing1 = Vector.direction(vector.angle() + 150 / 180 * 3.1415, 10)
+            wing2 = Vector.direction(vector.angle() - 150 / 180 * 3.1415, 10)
+            draw_vector(wing1, vector_end, false)
+            draw_vector(wing2, vector_end, false)
+        }
         function draw_sprite(sprite, entity, draw_mirror_entities = 1) {
             image = images[sprite.image_key]
             if (image === undefined) {
@@ -417,7 +499,7 @@
             while (attempt_count < 20) {
                 attempt_count += 1
                 new_rock = new Rock(Math.random() * viewport_width, Math.random() * viewport_width)
-                if (compute_wrapped_distance(new_rock, ship) > 80) break
+                if (compute_wrapped_distance(new_rock, ship) > 150) break
             }
             new_rock.set_speed(2)
             rocks.push(new_rock)
@@ -430,6 +512,11 @@
         function create_large_alien_ship() {
             new_alien = new LargeAlienShip()
             new_alien.move_offscreen(4)
+            alien_ships.push(new_alien)
+        }
+        function create_sniper_alien_ship() {
+            new_alien = new SniperAlienShip()
+            new_alien.move_offscreen(2)
             alien_ships.push(new_alien)
         }
         function reset_ship() {
@@ -546,14 +633,14 @@
                 rock_sprite = new Sprite('rock', 40)
                 small_alien_ship_sprite = new Sprite('small_alien_ship', 100)
                 small_alien_sprite = new Sprite('small_alien', 30)
-                large_alien_ship_sprite = new Sprite('large_alien_ship', 200)
-                large_alien_sprite = new Sprite('large_alien', 30)
+                sniper_alien_ship_sprite = new Sprite('large_alien_ship', 100)
+                sniper_alien_sprite = new Sprite('large_alien', 30)
                 ship_zeke = new Ship(0, 6, 'ship1', 'ship1_flame', 0, 120, bullet_saw)
                 ship_zach = new Ship(1, 4, 'ship2', 'ship2_flame', 'ship2_break', 150, bullet_lightning)
                 ship_zeke.sprite.center[0] = 20
                 ship_zach.sprite.center[0] = 15
-                ship_zeke.sprite.radius = 40
-                ship_zach.sprite.radius = 40
+                ship_zeke.sprite.radius = 35
+                ship_zach.sprite.radius = 35
                 ship = ship_zeke
 
                 background = new Entity(background_sprite, viewport_width / 2, viewport_height / 2, 0, 0, 0)
