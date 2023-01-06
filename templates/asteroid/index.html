@@ -450,16 +450,26 @@
 
             // Create new enemies
             if (rocks.length == 0 && alien_ships.length == 0) {
-                rock_count = 3
-                small_alien_count = 0
-                if (enemy_round >= 1) rock_count += 2
-                if (enemy_round >= 2) rock_count += 2
-                if (enemy_round >= 3) small_alien_count += 1
-                if (enemy_round >= 4) rock_count += 2
-                if (enemy_round >= 5) rock_count += 2
-                if (enemy_round >= 6) small_alien_count += 1
-                for (i = 0; i < rock_count; i++) create_rock()
-                for (i = 0; i < small_alien_count; i++) create_small_alien_ship()
+                switch(enemy_round) {
+                    case 0:  var enemy_counts = [3, 0, 0]; break;
+                    case 1:  var enemy_counts = [5, 0, 0]; break;
+                    case 2:  var enemy_counts = [7, 0, 0]; break;
+                    case 3:  var enemy_counts = [7, 1, 0]; break;
+                    case 4:  var enemy_counts = [9, 1, 0]; break;
+                    case 5:  var enemy_counts = [11, 1, 0]; break;
+                    case 6:  var enemy_counts = [11, 2, 0]; break;
+                    case 7:  var enemy_counts = [11, 2, 0]; break;
+                    case 8:  var enemy_counts = [11, 0, 1]; break;
+                    case 9:  var enemy_counts = [11, 0, 1]; break;
+                    case 10: var enemy_counts = [11, 1, 1]; break;
+                    case 11: var enemy_counts = [11, 1, 1]; break;
+                    case 12: var enemy_counts = [11, 2, 1]; break;
+                    case 13: var enemy_counts = [11, 2, 1]; break;
+                    default: var enemy_counts = [11, 2, 2]; break;
+                }
+                for (i = 0; i < enemy_counts[0]; i++) create_rock()
+                for (i = 0; i < enemy_counts[1]; i++) create_small_alien_ship()
+                for (i = 0; i < enemy_counts[2]; i++) create_sniper_alien_ship()
                 enemy_round += 1
             }
             for (i = 0; i < alien_ships.length; i++) alien_ships[i].maybe_create_child()
